@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
+import { registrationOpenLabel } from '@/content/registration';
 import { SiteLayout } from '@/components/SiteLayout';
 import type { AuthContextValue } from '@/hooks/AuthContext';
 
@@ -38,6 +39,9 @@ function buildAuthContext(
 
 describe('SiteLayout', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 30, 12, 0, 0));
+
     useAuthMock.mockReset();
     useSiteContentMock.mockReset();
 
@@ -55,6 +59,10 @@ describe('SiteLayout', () => {
       addAdmin: vi.fn(),
       removeAdmin: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('uses the updated green header theme for the top navigation', () => {
@@ -98,5 +106,27 @@ describe('SiteLayout', () => {
       'href',
       'https://example.com/brief'
     );
+    expect(screen.getByText(registrationOpenLabel)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Registration link' })).not.toBeInTheDocument();
+  });
+
+  it('shows the registration link once July 1st 2026 arrives', () => {
+    vi.setSystemTime(new Date(2026, 6, 1, 0, 0, 0));
+
+    render(
+      <MemoryRouter initialEntries={['/build']}>
+        <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route path="build" element={<div>Build page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Registration link' })).toHaveAttribute(
+      'href',
+      defaultSiteData.settings.registerUrl
+    );
+    expect(screen.queryByText(registrationOpenLabel)).not.toBeInTheDocument();
   });
 });

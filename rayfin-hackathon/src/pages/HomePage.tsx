@@ -12,6 +12,7 @@ import {
   isDefaultBlockId,
   isDefaultTimelineId,
 } from '@/content/defaultContent';
+import { isRegistrationOpen, registrationOpenLabel } from '@/content/registration';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 
@@ -30,6 +31,7 @@ export function HomePage() {
   const nextGoalSortOrder = useNextSortOrder(goals);
   const nextTimelineSortOrder = useNextSortOrder(siteData.timeline);
   const navigationItems = getNavigationItems(siteData.settings);
+  const registrationIsOpen = isRegistrationOpen();
   const exploreItems = [
     {
       href: '/build',
@@ -68,14 +70,20 @@ export function HomePage() {
               />
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <a
-                  href={siteData.settings.registerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-950/15 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700"
-                >
-                  Register now
-                </a>
+                {registrationIsOpen ? (
+                  <a
+                    href={siteData.settings.registerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-950/15 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700"
+                  >
+                    Register now
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center justify-center rounded-full bg-slate-300 px-8 py-3 text-base font-semibold text-slate-700 shadow-lg shadow-slate-950/10">
+                    {registrationOpenLabel}
+                  </span>
+                )}
                 <a
                   href="#timeline"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white/85 px-8 py-3 text-base font-semibold text-emerald-900 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-50"
@@ -172,19 +180,25 @@ export function HomePage() {
             {exploreItems.map((item) => (
               <article
                 key={item.href}
-                className="site-card rounded-2xl bg-white/90 p-4"
+                className="site-card group relative rounded-2xl bg-white/90 p-4"
               >
                 <Link
                   to={item.href}
-                  className="font-semibold text-slate-950 transition hover:text-blue-700"
+                  aria-label={item.title}
+                  className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-50"
                 >
-                  {item.title}
+                  <span className="sr-only">{item.title}</span>
                 </Link>
-                <RichTextBody
-                  body={item.description}
-                  className="mt-1 space-y-2"
-                  paragraphClassName="text-sm leading-6 text-slate-600"
-                />
+                <div className="pointer-events-none relative z-10">
+                  <h3 className="font-semibold text-slate-950 transition group-hover:text-blue-700">
+                    {item.title}
+                  </h3>
+                  <RichTextBody
+                    body={item.description}
+                    className="mt-1 space-y-2"
+                    paragraphClassName="text-sm leading-6 text-slate-600"
+                  />
+                </div>
               </article>
             ))}
           </div>

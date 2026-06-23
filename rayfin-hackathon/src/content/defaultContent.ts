@@ -1,4 +1,4 @@
-import rayfinBannerImage from '@/assets/rayfin.png';
+import hackerFishBannerImage from '@/assets/hacker-fish-banner.png';
 import {
   DEFAULT_ADMIN_EMAIL,
   type AdminEmailRecord,
@@ -47,7 +47,7 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   bannerTitle: 'Build standout apps with Rayfin this July',
   bannerDescription:
     'Bring your best product idea, prototype quickly with Rayfin, and showcase a polished solution to judges and peers during the Rayfin Hackathon.',
-  bannerImageUrl: rayfinBannerImage,
+  bannerImageUrl: hackerFishBannerImage,
   registerUrl: 'https://example.com/rayfin-hackathon-register',
   homeIntroTitle: 'Welcome to Rayfin Hackathon!',
   homeIntroBody:
@@ -338,6 +338,25 @@ export function mergeDefinedValues<T extends object>(
   return merged;
 }
 
+function isLegacyBannerImageUrl(value: string): boolean {
+  return /(^|[\\/])rayfin(?:-[A-Za-z0-9_-]+)?\.png(?:[?#].*)?$/i.test(value);
+}
+
+function mergeSiteSettings(
+  settings: Partial<SiteSettingsRecord> | SiteSettingsRecord | null | undefined
+): SiteSettingsRecord {
+  const merged = mergeDefinedValues(defaultSiteSettings, settings);
+
+  if (isLegacyBannerImageUrl(merged.bannerImageUrl)) {
+    return {
+      ...merged,
+      bannerImageUrl: defaultSiteSettings.bannerImageUrl,
+    };
+  }
+
+  return merged;
+}
+
 function mergeCollection<T extends { id: string; sortOrder?: number }>(
   defaults: T[],
   overrides: T[]
@@ -390,7 +409,7 @@ export function mergeSiteData(
   }
 
   return {
-    settings: mergeDefinedValues(defaultSiteSettings, settings),
+    settings: mergeSiteSettings(settings),
     blocks: mergeBlocks(defaultBlocks, blocks),
     timeline: mergeCollection(defaultTimeline, timeline),
     adminEmails: Array.from(mergedAdmins.values()).sort((left, right) =>

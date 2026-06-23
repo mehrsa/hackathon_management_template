@@ -8,6 +8,7 @@ import {
 
 import { RichTextBody } from '@/components/RichTextBody';
 import { getNavigationItems, isAdminEmail } from '@/content/defaultContent';
+import { isRegistrationOpen, registrationOpenLabel } from '@/content/registration';
 import { useAuth } from '@/hooks/AuthContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import type { AuthContextValue } from '@/hooks/AuthContext';
@@ -64,6 +65,7 @@ export function SiteLayout() {
   );
   const canManageContent = isAdmin && !isPreviewMode;
   const isEditing = canManageContent && editingEnabled;
+  const registrationIsOpen = isRegistrationOpen();
   const navigationItems = useMemo(
     () => getNavigationItems(siteData.settings),
     [siteData.settings]
@@ -273,14 +275,18 @@ export function SiteLayout() {
           <p>{siteData.settings.siteTitle}</p>
           <div className="flex flex-wrap items-center gap-4">
             <span>Current page: {currentPageLabel}</span>
-            <a
-              href={siteData.settings.registerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-blue-700 hover:text-blue-800"
-            >
-              Registration link
-            </a>
+            {registrationIsOpen ? (
+              <a
+                href={siteData.settings.registerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-blue-700 hover:text-blue-800"
+              >
+                Registration link
+              </a>
+            ) : (
+              <span className="font-semibold text-slate-500">{registrationOpenLabel}</span>
+            )}
           </div>
         </div>
       </footer>

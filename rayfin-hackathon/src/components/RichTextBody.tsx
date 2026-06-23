@@ -50,7 +50,7 @@ function renderParagraphContent(paragraph: string, paragraphIndex: number) {
         href={normalizeUrl(href)}
         target="_blank"
         rel="noreferrer"
-        className="font-medium text-blue-700 underline underline-offset-2 transition hover:text-blue-800"
+        className="relative z-10 pointer-events-auto font-medium text-blue-700 underline underline-offset-2 transition hover:text-blue-800"
       >
         {linkLabel}
       </a>

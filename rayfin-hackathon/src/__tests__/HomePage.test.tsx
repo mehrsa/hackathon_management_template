@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
+import { registrationOpenLabel } from '@/content/registration';
 import { HomePage } from '@/pages/HomePage';
 
 const useSitePageContextMock = vi.fn();
@@ -12,6 +13,15 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 }));
 
 describe('HomePage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 30, 12, 0, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('shows the editable welcome section content from site settings', () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
@@ -82,11 +92,24 @@ describe('HomePage', () => {
       'https://example.com/register'
     );
     expect(screen.getByRole('heading', { name: 'Explore this event' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Create with Rayfin/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Create with Rayfin' })).toHaveAttribute(
+      'href',
+      '/build'
+    );
+    expect(screen.getByRole('link', { name: 'Judging criteria' })).toHaveAttribute(
+      'href',
+      '/judging'
+    );
+    expect(screen.getByRole('link', { name: 'Submit your project' })).toHaveAttribute(
+      'href',
+      '/submit'
+    );
     expect(screen.getByRole('link', { name: 'starter kits' })).toHaveAttribute(
       'href',
       'https://example.com/starter-kits'
     );
+    expect(screen.getByText(registrationOpenLabel)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Register now' })).not.toBeInTheDocument();
     expect(
       screen.getByText('Understand how the final project is scored.')
     ).toBeInTheDocument();
@@ -137,5 +160,32 @@ describe('HomePage', () => {
     expect(screen.queryByText('Hackathon announcement')).not.toBeInTheDocument();
     expect(screen.queryByText('Explore the hackathon')).not.toBeInTheDocument();
     expect(screen.queryByText('Main page')).not.toBeInTheDocument();
+  });
+
+  it('enables registration on and after July 1st 2026', () => {
+    vi.setSystemTime(new Date(2026, 6, 1, 0, 0, 0));
+
+    useSitePageContextMock.mockReturnValue({
+      isEditing: false,
+      siteData: defaultSiteData,
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      saveTimelineMilestone: vi.fn(),
+      removeTimelineMilestone: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Register now' })).toHaveAttribute(
+      'href',
+      defaultSiteData.settings.registerUrl
+    );
+    expect(screen.queryByText(registrationOpenLabel)).not.toBeInTheDocument();
   });
 });
