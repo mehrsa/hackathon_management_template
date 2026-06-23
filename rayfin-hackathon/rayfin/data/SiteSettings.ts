@@ -22,6 +22,9 @@ export class SiteSettings {
   @text({ max: 160, optional: true }) homeIntroTitle?: string;
   @text({ max: 1200, optional: true }) homeIntroBody?: string;
   @text({ max: 160, optional: true }) homeExploreTitle?: string;
+  @text({ max: 300, optional: true }) homeExploreBuildDescription?: string;
+  @text({ max: 300, optional: true }) homeExploreJudgingDescription?: string;
+  @text({ max: 300, optional: true }) homeExploreSubmitDescription?: string;
   @text({ max: 160, optional: true }) homeGoalsTitle?: string;
   @text({ max: 200, optional: true }) homeTimelineTitle?: string;
   @text({ max: 200, optional: true }) buildHeroTitle?: string;

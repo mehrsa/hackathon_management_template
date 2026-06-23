@@ -21,6 +21,7 @@ describe('site content defaults', () => {
         bannerTitle: 'Updated title',
         homeIntroTitle: 'Updated welcome title',
         navBuildLabel: 'Updated build label',
+        homeExploreBuildDescription: 'Updated build shortcut description',
       },
       [
         {
@@ -53,6 +54,9 @@ describe('site content defaults', () => {
     expect(merged.settings.bannerTitle).toBe('Updated title');
     expect(merged.settings.homeIntroTitle).toBe('Updated welcome title');
     expect(merged.settings.navBuildLabel).toBe('Updated build label');
+    expect(merged.settings.homeExploreBuildDescription).toBe(
+      'Updated build shortcut description'
+    );
     expect(getBlocksForPage(merged.blocks, 'build')[1].title).toBe('Updated build card');
     expect(getBlocksForPage(merged.blocks, 'build').at(-1)?.title).toBe('New build card');
     expect(isAdminEmail('judge@example.com', merged.adminEmails)).toBe(true);
@@ -65,6 +69,7 @@ describe('site content defaults', () => {
         ...defaultSiteSettings,
         homeIntroBody: null as never,
         homeExploreTitle: null as never,
+        homeExploreBuildDescription: null as never,
         navBuildLabel: 'Updated build label',
       },
       [],
@@ -74,6 +79,9 @@ describe('site content defaults', () => {
 
     expect(merged.settings.homeIntroBody).toBe(defaultSiteSettings.homeIntroBody);
     expect(merged.settings.homeExploreTitle).toBe(defaultSiteSettings.homeExploreTitle);
+    expect(merged.settings.homeExploreBuildDescription).toBe(
+      defaultSiteSettings.homeExploreBuildDescription
+    );
     expect(merged.settings.navBuildLabel).toBe('Updated build label');
   });
 
@@ -99,5 +107,29 @@ describe('site content defaults', () => {
     expect(merged.blocks.some((block) => block.id === '33333333-3333-4333-8333-111111111111')).toBe(
       false
     );
+  });
+
+  it('omits default submission checklist items when a persisted hidden override exists', () => {
+    const merged = mergeSiteData(
+      null,
+      [
+        {
+          id: '55555555-5555-4555-8555-111111111111',
+          pageKey: 'submit',
+          blockKind: 'submission',
+          title: 'Project summary',
+          body: 'Hidden',
+          isHidden: true,
+          sortOrder: 1,
+        },
+      ],
+      [],
+      []
+    );
+
+    expect(getBlocksForPage(merged.blocks, 'submit')).toHaveLength(3);
+    expect(
+      merged.blocks.some((block) => block.id === '55555555-5555-4555-8555-111111111111')
+    ).toBe(false);
   });
 });

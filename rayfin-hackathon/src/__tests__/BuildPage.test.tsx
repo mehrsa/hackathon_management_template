@@ -11,7 +11,37 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 }));
 
 describe('BuildPage', () => {
-  it('renders URLs in idea card body copy as clickable links', () => {
+  it('renders custom link text in idea card body copy as clickable links', () => {
+    useSitePageContextMock.mockReturnValue({
+      isEditing: false,
+      siteData: {
+        ...defaultSiteData,
+        blocks: defaultSiteData.blocks.map((block) =>
+          block.id === '33333333-3333-4333-8333-111111111111'
+            ? {
+                ...block,
+                body:
+                  'Review the [reference app](https://example.com/demo) for inspiration.',
+              }
+            : block
+        ),
+      },
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+    });
+
+    render(<BuildPage />);
+
+    expect(
+      screen.getByRole('link', {
+        name: 'reference app',
+      })
+    ).toHaveAttribute('href', 'https://example.com/demo');
+  });
+
+  it('still renders plain URLs in idea card body copy as clickable links', () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: {

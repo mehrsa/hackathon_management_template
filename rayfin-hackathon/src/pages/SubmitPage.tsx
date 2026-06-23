@@ -2,17 +2,14 @@ import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
 } from '@/components/ContentEditors';
-import { getBlocksForPage, isDefaultBlockId } from '@/content/defaultContent';
+import { RichTextBody } from '@/components/RichTextBody';
+import {
+  canHideDefaultBlock,
+  getBlocksForPage,
+  isDefaultBlockId,
+} from '@/content/defaultContent';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
-
-function renderBody(body: string) {
-  return body.split('\n').map((paragraph) => (
-    <p key={paragraph} className="text-sm leading-7 text-slate-600">
-      {paragraph}
-    </p>
-  ));
-}
 
 export function SubmitPage() {
   const {
@@ -36,9 +33,11 @@ export function SubmitPage() {
         <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
           {siteData.settings.submitHeroTitle}
         </h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-200">
-          {siteData.settings.submitIntro}
-        </p>
+        <RichTextBody
+          body={siteData.settings.submitIntro}
+          className="mt-4 max-w-3xl space-y-3"
+          paragraphClassName="text-base leading-8 text-slate-200"
+        />
 
         {isEditing ? (
           <div className="mt-8 max-w-3xl">
@@ -60,7 +59,7 @@ export function SubmitPage() {
                 },
                 {
                   key: 'submitIntro',
-                  label: 'Page introduction',
+                  label: 'Page introduction (supports [link text](https://example.com))',
                   multiline: true,
                 },
                 {
@@ -120,7 +119,7 @@ export function SubmitPage() {
               className="site-card rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm"
             >
               <h2 className="text-xl font-semibold text-slate-950">{block.title}</h2>
-              <div className="mt-3 space-y-3">{renderBody(block.body)}</div>
+              <RichTextBody body={block.body} className="mt-3 space-y-3" />
               {block.ctaLabel && block.ctaUrl ? (
                 <a
                   href={block.ctaUrl}
@@ -140,7 +139,7 @@ export function SubmitPage() {
                     saving={saving}
                     onSave={saveBlock}
                     onDelete={removeBlock}
-                    canDelete={!isDefaultBlockId(block.id)}
+                    canDelete={!isDefaultBlockId(block.id) || canHideDefaultBlock(block)}
                     deleteLabel="Delete checklist item"
                     showCallToActionFields={true}
                   />

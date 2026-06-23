@@ -6,6 +6,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 
+import { RichTextBody } from '@/components/RichTextBody';
 import { getNavigationItems, isAdminEmail } from '@/content/defaultContent';
 import { useAuth } from '@/hooks/AuthContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
@@ -194,9 +195,11 @@ export function SiteLayout() {
             >
               {siteData.settings.siteTitle}
             </Link>
-            <p className="mt-1 max-w-2xl text-sm text-slate-600">
-              {siteData.settings.siteDescription}
-            </p>
+            <RichTextBody
+              body={siteData.settings.siteDescription}
+              className="mt-1 max-w-2xl space-y-1"
+              paragraphClassName="text-sm text-slate-600"
+            />
             {isAdmin ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link

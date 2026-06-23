@@ -5,6 +5,7 @@ import {
   SiteSettingsInlineEditor,
   TimelineMilestoneInlineEditor,
 } from '@/components/ContentEditors';
+import { RichTextBody } from '@/components/RichTextBody';
 import {
   getNavigationItems,
   getBlocksForPage,
@@ -13,14 +14,6 @@ import {
 } from '@/content/defaultContent';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
-
-function renderBody(body: string) {
-  return body.split('\n').map((paragraph) => (
-    <p key={paragraph} className="text-sm leading-7 text-slate-600">
-      {paragraph}
-    </p>
-  ));
-}
 
 export function HomePage() {
   const {
@@ -41,17 +34,17 @@ export function HomePage() {
     {
       href: '/build',
       title: navigationItems[0].label,
-      description: 'Examples and prompts to help teams choose a strong direction.',
+      description: siteData.settings.homeExploreBuildDescription,
     },
     {
       href: '/judging',
       title: navigationItems[1].label,
-      description: 'A clear view of how entries will be evaluated.',
+      description: siteData.settings.homeExploreJudgingDescription,
     },
     {
       href: '/submit',
       title: navigationItems[2].label,
-      description: 'Everything teams need to include in the final handoff.',
+      description: siteData.settings.homeExploreSubmitDescription,
     },
   ];
 
@@ -68,9 +61,11 @@ export function HomePage() {
               <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl lg:text-6xl">
               {siteData.settings.bannerTitle}
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700">
-              {siteData.settings.bannerDescription}
-              </p>
+              <RichTextBody
+                body={siteData.settings.bannerDescription}
+                className="mt-5 max-w-2xl space-y-3"
+                paragraphClassName="text-base leading-8 text-slate-700"
+              />
 
               <div className="mt-8 flex flex-wrap gap-4">
                 <a
@@ -101,14 +96,15 @@ export function HomePage() {
                       { key: 'siteTitle', label: 'Site title' },
                       {
                         key: 'siteDescription',
-                        label: 'Site description',
+                        label: 'Site description (supports [link text](https://example.com))',
                         multiline: true,
                       },
                       { key: 'heroBadge', label: 'Hero badge' },
                       { key: 'bannerTitle', label: 'Banner title' },
                       {
                         key: 'bannerDescription',
-                        label: 'Banner description',
+                        label:
+                          'Banner description (supports [link text](https://example.com))',
                         multiline: true,
                       },
                       { key: 'bannerImageUrl', label: 'Banner image URL' },
@@ -142,7 +138,10 @@ export function HomePage() {
               </h2>
             </div>
           </div>
-          <div className="mt-4 max-w-3xl space-y-3">{renderBody(siteData.settings.homeIntroBody)}</div>
+          <RichTextBody
+            body={siteData.settings.homeIntroBody}
+            className="mt-4 max-w-3xl space-y-3"
+          />
 
           {isEditing ? (
             <div className="mt-6 max-w-3xl">
@@ -156,7 +155,7 @@ export function HomePage() {
                   { key: 'homeIntroTitle', label: 'Section title' },
                   {
                     key: 'homeIntroBody',
-                    label: 'Section body',
+                    label: 'Section body (supports [link text](https://example.com))',
                     multiline: true,
                   },
                 ]}
@@ -171,30 +170,56 @@ export function HomePage() {
           </h2>
           <div className="mt-4 grid gap-3">
             {exploreItems.map((item) => (
-              <Link
+              <article
                 key={item.href}
-                to={item.href}
                 className="site-card rounded-2xl bg-white/90 p-4"
               >
-                <p className="font-semibold text-slate-950">{item.title}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
-              </Link>
+                <Link
+                  to={item.href}
+                  className="font-semibold text-slate-950 transition hover:text-blue-700"
+                >
+                  {item.title}
+                </Link>
+                <RichTextBody
+                  body={item.description}
+                  className="mt-1 space-y-2"
+                  paragraphClassName="text-sm leading-6 text-slate-600"
+                />
+              </article>
             ))}
           </div>
 
           {isEditing ? (
             <div className="mt-6 border-t border-emerald-200/80 pt-6">
               <SiteSettingsInlineEditor
-                title="Edit menu and shortcut titles"
-                description="Update the shared navigation labels and the title for this quick-links section."
+                title="Edit menu and shortcut copy"
+                description="Update the shared navigation labels, this section title, and the description shown below each shortcut."
                 settings={siteData.settings}
                 saving={saving}
                 onSave={saveSettings}
                 fields={[
                   { key: 'homeExploreTitle', label: 'Quick-links section title' },
                   { key: 'navBuildLabel', label: 'Menu label: build page' },
+                  {
+                    key: 'homeExploreBuildDescription',
+                    label:
+                      'Description: build page (supports [link text](https://example.com))',
+                    multiline: true,
+                  },
                   { key: 'navJudgingLabel', label: 'Menu label: judging page' },
+                  {
+                    key: 'homeExploreJudgingDescription',
+                    label:
+                      'Description: judging page (supports [link text](https://example.com))',
+                    multiline: true,
+                  },
                   { key: 'navSubmitLabel', label: 'Menu label: submit page' },
+                  {
+                    key: 'homeExploreSubmitDescription',
+                    label:
+                      'Description: submit page (supports [link text](https://example.com))',
+                    multiline: true,
+                  },
                 ]}
                 className="bg-white/90"
               />
@@ -251,7 +276,7 @@ export function HomePage() {
                 Goal {index + 1}
               </span>
               <h3 className="mt-4 text-lg font-semibold text-slate-950">{goal.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{goal.body}</p>
+              <RichTextBody body={goal.body} className="mt-3 space-y-3" />
 
               {isEditing ? (
                 <div className="mt-5 border-t border-slate-200 pt-5">
@@ -329,7 +354,10 @@ export function HomePage() {
                     {item.dateLabel}
                   </p>
                   <h3 className="mt-2 text-lg font-semibold text-slate-950">{item.milestone}</h3>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
+                  <RichTextBody
+                    body={item.description}
+                    className="mt-2 space-y-3"
+                  />
 
                   {isEditing ? (
                     <div className="mt-5 border-t border-slate-200 pt-5">

@@ -53,6 +53,10 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   homeIntroBody:
     'Use this site as the central source for the Rayfin Hackathon: announce the event, point builders to the right guidance, explain judging, and make submissions easy.',
   homeExploreTitle: 'What you need to know ...',
+  homeExploreBuildDescription:
+    'Examples and prompts to help teams choose a strong direction.',
+  homeExploreJudgingDescription: 'A clear view of how entries will be evaluated.',
+  homeExploreSubmitDescription: 'Everything teams need to include in the final handoff.',
   homeGoalsTitle: 'Hackathon Goals',
   homeTimelineTitle: 'Hackathon timeline and key milestones',
   buildHeroTitle: 'Choose a problem worth solving and show why your concept matters.',
@@ -285,6 +289,17 @@ export function getBlocksForPage(blocks: ContentBlockRecord[], pageKey: PageKey)
 
 export function isDefaultBlockId(id: string): boolean {
   return defaultBlocks.some((block) => block.id === id);
+}
+
+export function canHideDefaultBlock(block: ContentBlockRecord): boolean {
+  if (!isDefaultBlockId(block.id)) {
+    return false;
+  }
+
+  return (
+    (block.pageKey === 'build' && block.blockKind === 'idea') ||
+    (block.pageKey === 'submit' && block.blockKind === 'submission')
+  );
 }
 
 export function isDefaultTimelineId(id: string): boolean {

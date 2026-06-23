@@ -63,6 +63,8 @@ describe('SiteLayout', () => {
         ...defaultSiteData,
         settings: {
           ...defaultSiteData.settings,
+          siteDescription:
+            'Get the [official brief](https://example.com/brief) before exploring the event.',
           navBuildLabel: 'Create with Rayfin',
         },
       },
@@ -91,6 +93,10 @@ describe('SiteLayout', () => {
     expect(screen.getByRole('banner')).toHaveClass('bg-emerald-50/80');
     expect(screen.getByRole('link', { name: 'Create with Rayfin' })).toHaveClass(
       'bg-emerald-200'
+    );
+    expect(screen.getByRole('link', { name: 'official brief' })).toHaveAttribute(
+      'href',
+      'https://example.com/brief'
     );
   });
 });

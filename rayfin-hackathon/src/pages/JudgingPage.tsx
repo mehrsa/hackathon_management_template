@@ -2,17 +2,10 @@ import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
 } from '@/components/ContentEditors';
+import { RichTextBody } from '@/components/RichTextBody';
 import { getBlocksForPage, isDefaultBlockId } from '@/content/defaultContent';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
-
-function renderBody(body: string) {
-  return body.split('\n').map((paragraph) => (
-    <p key={paragraph} className="text-sm leading-7 text-slate-600">
-      {paragraph}
-    </p>
-  ));
-}
 
 export function JudgingPage() {
   const {
@@ -36,9 +29,11 @@ export function JudgingPage() {
         <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
           {siteData.settings.judgingHeroTitle}
         </h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-100">
-          {siteData.settings.judgingIntro}
-        </p>
+        <RichTextBody
+          body={siteData.settings.judgingIntro}
+          className="mt-4 max-w-3xl space-y-3"
+          paragraphClassName="text-base leading-8 text-slate-100"
+        />
 
         {isEditing ? (
           <div className="mt-8 max-w-3xl">
@@ -60,7 +55,7 @@ export function JudgingPage() {
                 },
                 {
                   key: 'judgingIntro',
-                  label: 'Page introduction',
+                  label: 'Page introduction (supports [link text](https://example.com))',
                   multiline: true,
                 },
                 {
@@ -118,7 +113,7 @@ export function JudgingPage() {
                 {index + 1}
               </div>
               <h2 className="mt-4 text-xl font-semibold text-slate-950">{block.title}</h2>
-              <div className="mt-3 space-y-3">{renderBody(block.body)}</div>
+              <RichTextBody body={block.body} className="mt-3 space-y-3" />
 
               {isEditing ? (
                 <div className="mt-5 border-t border-slate-200 pt-5">

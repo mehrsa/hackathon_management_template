@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  canHideDefaultBlock,
   defaultSiteData,
   emptyPersistedState,
   isDefaultAdminId,
@@ -148,10 +149,9 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         throw new Error('Content block could not be found.');
       }
 
-      const canHideDefaultBuildIdea =
-        isDefaultBlockId(id) && block.pageKey === 'build' && block.blockKind === 'idea';
+      const canHideDefaultPageBlock = canHideDefaultBlock(block);
 
-      if (isDefaultBlockId(id) && !canHideDefaultBuildIdea) {
+      if (isDefaultBlockId(id) && !canHideDefaultPageBlock) {
         throw new Error('Default content blocks cannot be deleted.');
       }
 
@@ -159,7 +159,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
       setError(null);
 
       try {
-        if (canHideDefaultBuildIdea) {
+        if (canHideDefaultPageBlock) {
           const hiddenBlock = { ...block, isHidden: true };
 
           if (persisted.blockIds.includes(id)) {
@@ -172,7 +172,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         }
 
         setPersisted((current) =>
-          canHideDefaultBuildIdea
+          canHideDefaultPageBlock
             ? {
                 ...current,
                 blockIds: current.blockIds.includes(id)

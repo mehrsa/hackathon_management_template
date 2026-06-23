@@ -1,72 +1,11 @@
-import type { ReactNode } from 'react';
-
 import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
 } from '@/components/ContentEditors';
+import { RichTextBody } from '@/components/RichTextBody';
 import { getBlocksForPage } from '@/content/defaultContent';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
-
-const bodyLinkPattern = /(?:https?:\/\/|www\.)[^\s]+/gi;
-const trailingLinkPunctuationPattern = /[),.!?;:\]]+$/;
-
-function renderParagraph(paragraph: string, paragraphIndex: number) {
-  const parts: ReactNode[] = [];
-  let lastIndex = 0;
-
-  for (const match of paragraph.matchAll(bodyLinkPattern)) {
-    const startIndex = match.index ?? 0;
-    const matchedText = match[0];
-    const trimmedMatch = matchedText.replace(trailingLinkPunctuationPattern, '');
-
-    if (!trimmedMatch) {
-      continue;
-    }
-
-    const trailingText = matchedText.slice(trimmedMatch.length);
-
-    if (startIndex > lastIndex) {
-      parts.push(paragraph.slice(lastIndex, startIndex));
-    }
-
-    parts.push(
-      <a
-        key={`link-${paragraphIndex}-${startIndex}`}
-        href={trimmedMatch.startsWith('www.') ? `https://${trimmedMatch}` : trimmedMatch}
-        target="_blank"
-        rel="noreferrer"
-        className="font-medium text-blue-700 underline underline-offset-2 transition hover:text-blue-800"
-      >
-        {trimmedMatch}
-      </a>
-    );
-
-    if (trailingText) {
-      parts.push(trailingText);
-    }
-
-    lastIndex = startIndex + matchedText.length;
-  }
-
-  if (lastIndex === 0) {
-    return paragraph;
-  }
-
-  if (lastIndex < paragraph.length) {
-    parts.push(paragraph.slice(lastIndex));
-  }
-
-  return parts;
-}
-
-function renderBody(body: string) {
-  return body.split('\n').map((paragraph, index) => (
-    <p key={`paragraph-${index}`} className="text-sm leading-7 text-slate-600">
-      {renderParagraph(paragraph, index)}
-    </p>
-  ));
-}
 
 export function BuildPage() {
   const {
@@ -90,9 +29,11 @@ export function BuildPage() {
         <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
           {siteData.settings.buildHeroTitle}
         </h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-200">
-          {siteData.settings.buildIntro}
-        </p>
+        <RichTextBody
+          body={siteData.settings.buildIntro}
+          className="mt-4 max-w-3xl space-y-3"
+          paragraphClassName="text-base leading-8 text-slate-200"
+        />
 
         {isEditing ? (
           <div className="mt-8 max-w-3xl">
@@ -114,7 +55,7 @@ export function BuildPage() {
                 },
                 {
                   key: 'buildIntro',
-                  label: 'Page introduction',
+                  label: 'Page introduction (supports [link text](https://example.com))',
                   multiline: true,
                 },
                 {
@@ -178,7 +119,7 @@ export function BuildPage() {
               ) : null}
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-slate-950">{block.title}</h2>
-                <div className="mt-3 space-y-3">{renderBody(block.body)}</div>
+                <RichTextBody body={block.body} className="mt-3 space-y-3" />
                 {block.ctaLabel && block.ctaUrl ? (
                   <a
                     href={block.ctaUrl}
@@ -202,6 +143,7 @@ export function BuildPage() {
                       deleteLabel="Delete idea card"
                       showImageField={true}
                       showCallToActionFields={true}
+                      bodyPlaceholder="Describe the idea. Use [link text](https://example.com) to turn words into a clickable link."
                     />
                   </div>
                 ) : null}

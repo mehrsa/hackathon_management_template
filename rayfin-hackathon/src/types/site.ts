@@ -18,6 +18,9 @@ export interface SiteSettingsRecord {
   homeIntroTitle: string;
   homeIntroBody: string;
   homeExploreTitle: string;
+  homeExploreBuildDescription: string;
+  homeExploreJudgingDescription: string;
+  homeExploreSubmitDescription: string;
   homeGoalsTitle: string;
   homeTimelineTitle: string;
   buildHeroTitle: string;

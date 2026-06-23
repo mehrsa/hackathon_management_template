@@ -162,6 +162,8 @@ interface ContentBlockInlineEditorProps {
   deleteLabel?: string;
   showImageField?: boolean;
   showCallToActionFields?: boolean;
+  bodyLabel?: string;
+  bodyPlaceholder?: string;
   className?: string;
 }
 
@@ -176,6 +178,8 @@ export function ContentBlockInlineEditor({
   deleteLabel = 'Delete item',
   showImageField = false,
   showCallToActionFields = false,
+  bodyLabel = 'Body (supports [link text](https://example.com))',
+  bodyPlaceholder,
   className,
 }: ContentBlockInlineEditorProps) {
   const [draft, setDraft] = useState(block);
@@ -231,9 +235,10 @@ export function ContentBlockInlineEditor({
 
       <div className="mt-4 space-y-4">
         <FormField
-          label="Body"
+          label={bodyLabel}
           value={draft.body}
           multiline={true}
+          placeholder={bodyPlaceholder}
           onChange={(value) => setDraft((current) => ({ ...current, body: value }))}
         />
 
@@ -375,7 +380,7 @@ export function TimelineMilestoneInlineEditor({
 
       <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_140px]">
         <FormField
-          label="Description"
+          label="Description (supports [link text](https://example.com))"
           value={draft.description}
           multiline={true}
           onChange={(value) =>
