@@ -1,0 +1,25 @@
+id: rayfin-hackathon
+name: rayfin-hackathon
+version: 1.0.0
+services:
+  auth:
+    enabled: true
+    fabric:
+      enabled: true
+    password:
+      enabled: true
+    allowedRedirectUris:
+      - http://localhost:5173
+      - https://full-wren-95e36a109a-westcentralus.webapp.msit.fabricapps.net
+  data:
+    enabled: true
+    dialect: mssql
+  staticHosting:
+    enabled: true
+    folder: dist
+    buildCommand: npm run build:fabric
+    indexDocument: index.html
+  storage:
+    enabled: false
+  functions:
+    enabled: false
