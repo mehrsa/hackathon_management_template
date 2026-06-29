@@ -85,6 +85,20 @@ describe('site content defaults', () => {
     expect(merged.settings.navBuildLabel).toBe('Updated build label');
   });
 
+  it('replaces persisted legacy banner image URLs with the new hacker fish banner', () => {
+    const merged = mergeSiteData(
+      {
+        ...defaultSiteSettings,
+        bannerImageUrl: '/assets/rayfin-CVEgr5SR.png',
+      },
+      [],
+      [],
+      []
+    );
+
+    expect(merged.settings.bannerImageUrl).toBe(defaultSiteSettings.bannerImageUrl);
+  });
+
   it('omits default build cards when a persisted hidden override exists', () => {
     const merged = mergeSiteData(
       null,
