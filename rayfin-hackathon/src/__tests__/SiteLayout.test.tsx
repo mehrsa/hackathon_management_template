@@ -1,9 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
-import { registrationOpenLabel } from '@/content/registration';
 import { SiteLayout } from '@/components/SiteLayout';
 import type { AuthContextValue } from '@/hooks/AuthContext';
 
@@ -39,9 +38,6 @@ function buildAuthContext(
 
 describe('SiteLayout', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 5, 30, 12, 0, 0));
-
     useAuthMock.mockReset();
     useSiteContentMock.mockReset();
 
@@ -59,10 +55,6 @@ describe('SiteLayout', () => {
       addAdmin: vi.fn(),
       removeAdmin: vi.fn(),
     });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('uses the updated green header theme for the top navigation', () => {
@@ -99,19 +91,48 @@ describe('SiteLayout', () => {
     );
 
     expect(screen.getByRole('banner')).toHaveClass('bg-emerald-50/80');
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Create with Rayfin' })).toHaveClass(
       'bg-emerald-200'
     );
-    expect(screen.getByRole('link', { name: 'official brief' })).toHaveAttribute(
+    expect(screen.queryByRole('link', { name: 'official brief' })).not.toBeInTheDocument();
+    const registrationLinks = screen.getAllByRole('link', { name: 'Registration Portal' });
+
+    expect(registrationLinks[0]).toHaveAttribute(
       'href',
-      'https://example.com/brief'
+      '/register'
     );
-    expect(screen.getByText(registrationOpenLabel)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Registration link' })).not.toBeInTheDocument();
+    expect(registrationLinks[1]).toHaveAttribute(
+      'href',
+      '/register'
+    );
   });
 
-  it('shows the registration link once July 1st 2026 arrives', () => {
-    vi.setSystemTime(new Date(2026, 6, 1, 0, 0, 0));
+  it('shows admin as a menu item only for admins', () => {
+    useAuthMock.mockReturnValue(
+      buildAuthContext({
+        user: {
+          id: 'admin-1',
+          email: defaultSiteData.adminEmails[0].email,
+          name: 'Admin',
+        },
+      })
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/admin']}>
+        <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route path="admin" element={<div>Admin page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin');
+
+    useAuthMock.mockReturnValue(buildAuthContext());
+    cleanup();
 
     render(
       <MemoryRouter initialEntries={['/build']}>
@@ -123,10 +144,6 @@ describe('SiteLayout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('link', { name: 'Registration link' })).toHaveAttribute(
-      'href',
-      defaultSiteData.settings.registerUrl
-    );
-    expect(screen.queryByText(registrationOpenLabel)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
   });
 });

@@ -141,7 +141,7 @@ describe('site content defaults', () => {
       []
     );
 
-    expect(getBlocksForPage(merged.blocks, 'submit')).toHaveLength(3);
+    expect(getBlocksForPage(merged.blocks, 'submit')).toHaveLength(0);
     expect(
       merged.blocks.some((block) => block.id === '55555555-5555-4555-8555-111111111111')
     ).toBe(false);

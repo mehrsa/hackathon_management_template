@@ -1,7 +1,7 @@
 export const DEFAULT_ADMIN_EMAIL = 'mgolestaneh@microsoft.com';
 
 export type PageKey = 'home' | 'build' | 'judging' | 'submit';
-export type BlockKind = 'goal' | 'idea' | 'criterion' | 'submission';
+export type BlockKind = 'goal' | 'idea' | 'criterion' | 'reward' | 'submission';
 
 export interface SiteSettingsRecord {
   id: string;
@@ -10,6 +10,7 @@ export interface SiteSettingsRecord {
   navBuildLabel: string;
   navJudgingLabel: string;
   navSubmitLabel: string;
+  navProjectsLabel: string;
   heroBadge: string;
   bannerTitle: string;
   bannerDescription: string;
@@ -21,6 +22,7 @@ export interface SiteSettingsRecord {
   homeExploreBuildDescription: string;
   homeExploreJudgingDescription: string;
   homeExploreSubmitDescription: string;
+  homeExploreProjectsDescription: string;
   homeGoalsTitle: string;
   homeTimelineTitle: string;
   buildHeroTitle: string;
@@ -32,7 +34,7 @@ export interface SiteSettingsRecord {
   submitHeroTitle: string;
   submitChecklistEyebrow: string;
   submitChecklistTitle: string;
-  submitReminderTitle: string;
+  submitDeadline: string;
   buildIntro: string;
   judgingIntro: string;
   submitIntro: string;

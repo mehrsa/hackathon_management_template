@@ -7,12 +7,10 @@ import {
 } from '@/components/ContentEditors';
 import { RichTextBody } from '@/components/RichTextBody';
 import {
-  getNavigationItems,
   getBlocksForPage,
   isDefaultBlockId,
   isDefaultTimelineId,
 } from '@/content/defaultContent';
-import { isRegistrationOpen, registrationOpenLabel } from '@/content/registration';
 import { useNextSortOrder } from '@/hooks/useNextSortOrder';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 
@@ -30,60 +28,55 @@ export function HomePage() {
   const goals = getBlocksForPage(siteData.blocks, 'home');
   const nextGoalSortOrder = useNextSortOrder(goals);
   const nextTimelineSortOrder = useNextSortOrder(siteData.timeline);
-  const navigationItems = getNavigationItems(siteData.settings);
-  const registrationIsOpen = isRegistrationOpen();
   const exploreItems = [
     {
       href: '/build',
-      title: navigationItems[0].label,
+      title: siteData.settings.navBuildLabel,
       description: siteData.settings.homeExploreBuildDescription,
     },
     {
       href: '/judging',
-      title: navigationItems[1].label,
+      title: siteData.settings.navJudgingLabel,
       description: siteData.settings.homeExploreJudgingDescription,
     },
     {
       href: '/submit',
-      title: navigationItems[2].label,
+      title: siteData.settings.navSubmitLabel,
       description: siteData.settings.homeExploreSubmitDescription,
+    },
+    {
+      href: '/projects',
+      title: siteData.settings.navProjectsLabel,
+      description: siteData.settings.homeExploreProjectsDescription,
     },
   ];
 
   return (
     <div className="space-y-8">
       <section className="glass-panel overflow-hidden rounded-[2rem]">
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(380px,1fr)]">
-          <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-emerald-50 px-8 py-10 text-slate-950 md:px-10 md:py-12">
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.9fr)]">
+          <div className="relative overflow-hidden bg-gradient-to-br from-white via-blue-50 to-emerald-50 px-8 py-8 text-slate-950 md:px-10 md:py-10">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(191,219,254,0.55),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(167,243,208,0.45),transparent_36%)]" />
             <div className="relative">
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-blue-700">
-              {siteData.settings.heroBadge}
+                {siteData.settings.heroBadge}
               </p>
-              <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl lg:text-6xl">
-              {siteData.settings.bannerTitle}
+              <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl lg:text-[3.2rem]">
+                {siteData.settings.bannerTitle}
               </h1>
               <RichTextBody
                 body={siteData.settings.bannerDescription}
                 className="mt-5 max-w-2xl space-y-3"
-                paragraphClassName="text-base leading-8 text-slate-700"
+                paragraphClassName="text-[1.02rem] leading-8 text-slate-700"
               />
 
               <div className="mt-8 flex flex-wrap gap-4">
-                {registrationIsOpen ? (
-                  <a
-                    href={siteData.settings.registerUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-950/15 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700"
-                  >
-                    Register now
-                  </a>
-                ) : (
-                  <span className="inline-flex items-center justify-center rounded-full bg-slate-300 px-8 py-3 text-base font-semibold text-slate-700 shadow-lg shadow-slate-950/10">
-                    {registrationOpenLabel}
-                  </span>
-                )}
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-950/15 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700"
+                >
+                  Register now
+                </Link>
                 <a
                   href="#timeline"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white/85 px-8 py-3 text-base font-semibold text-emerald-900 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-50"
@@ -96,7 +89,7 @@ export function HomePage() {
                 <div className="mt-8 max-w-3xl">
                   <SiteSettingsInlineEditor
                     title="Edit hero section"
-                    description="Update the announcement, hero artwork, and registration link directly from the main page."
+                    description="Update the announcement and hero artwork directly from the main page."
                     settings={siteData.settings}
                     saving={saving}
                     onSave={saveSettings}
@@ -116,7 +109,6 @@ export function HomePage() {
                         multiline: true,
                       },
                       { key: 'bannerImageUrl', label: 'Banner image URL' },
-                      { key: 'registerUrl', label: 'Registration URL' },
                     ]}
                   />
                 </div>
@@ -124,13 +116,13 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="relative min-h-[420px] overflow-hidden bg-gradient-to-br from-white via-blue-100 to-emerald-100 p-6">
+          <div className="relative min-h-[340px] overflow-hidden bg-gradient-to-br from-white via-blue-100 to-emerald-100 p-5">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.7),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.16),transparent_36%)]" />
             <div className="relative flex h-full items-center justify-center">
               <img
                 src={siteData.settings.bannerImageUrl}
                 alt="Rayfin Hackathon banner"
-                className="ml-auto h-full min-h-[360px] w-full max-w-xl rounded-[1.75rem] border border-white/80 object-cover object-center shadow-2xl shadow-blue-950/15"
+                className="ml-auto h-full min-h-[300px] w-full max-w-lg rounded-[1.75rem] border border-white/80 object-cover object-center shadow-2xl shadow-blue-950/15"
               />
             </div>
           </div>
@@ -149,6 +141,7 @@ export function HomePage() {
           <RichTextBody
             body={siteData.settings.homeIntroBody}
             className="mt-4 max-w-3xl space-y-3"
+            paragraphClassName="text-base leading-8 text-slate-700"
           />
 
           {isEditing ? (
@@ -196,7 +189,7 @@ export function HomePage() {
                   <RichTextBody
                     body={item.description}
                     className="mt-1 space-y-2"
-                    paragraphClassName="text-sm leading-6 text-slate-600"
+                    paragraphClassName="text-base leading-7 text-slate-700"
                   />
                 </div>
               </article>
@@ -232,6 +225,13 @@ export function HomePage() {
                     key: 'homeExploreSubmitDescription',
                     label:
                       'Description: submit page (supports [link text](https://example.com))',
+                    multiline: true,
+                  },
+                  { key: 'navProjectsLabel', label: 'Menu label: proposed projects page' },
+                  {
+                    key: 'homeExploreProjectsDescription',
+                    label:
+                      'Description: proposed projects page (supports [link text](https://example.com))',
                     multiline: true,
                   },
                 ]}

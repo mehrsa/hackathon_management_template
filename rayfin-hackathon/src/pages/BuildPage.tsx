@@ -21,18 +21,18 @@ export function BuildPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-8 py-12 text-white shadow-xl">
-        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-blue-400/20 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-8 py-9 text-white shadow-xl md:px-10 md:py-10">
+        <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-blue-400/20 blur-3xl" />
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-200">
           {siteData.settings.navBuildLabel}
         </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-3xl font-semibold tracking-tight md:text-4xl lg:text-[2.7rem]">
           {siteData.settings.buildHeroTitle}
         </h1>
         <RichTextBody
           body={siteData.settings.buildIntro}
           className="mt-4 max-w-3xl space-y-3"
-          paragraphClassName="text-base leading-8 text-slate-200"
+          paragraphClassName="text-[1.02rem] leading-8 text-slate-200"
         />
 
         {isEditing ? (

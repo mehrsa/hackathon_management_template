@@ -24,6 +24,7 @@ const ids = {
   judging2: '44444444-4444-4444-8444-222222222222',
   judging3: '44444444-4444-4444-8444-333333333333',
   judging4: '44444444-4444-4444-8444-444444444444',
+  judgingReward: '44444444-4444-4444-8444-555555555555',
   submit1: '55555555-5555-4555-8555-111111111111',
   submit2: '55555555-5555-4555-8555-222222222222',
   submit3: '55555555-5555-4555-8555-333333333333',
@@ -41,8 +42,9 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   siteDescription:
     'Design, build, and launch Rayfin-powered experiences with guidance for teams, judges, and submitters in one place.',
   navBuildLabel: 'What you can build',
-  navJudgingLabel: 'Judging criteria',
+  navJudgingLabel: 'Judging Criteria & Rewards',
   navSubmitLabel: 'Submit your project',
+  navProjectsLabel: 'Proposed projects',
   heroBadge: 'July 2026 Hackathon Announcement',
   bannerTitle: 'Build standout apps with Rayfin this July',
   bannerDescription:
@@ -57,6 +59,8 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     'Examples and prompts to help teams choose a strong direction.',
   homeExploreJudgingDescription: 'A clear view of how entries will be evaluated.',
   homeExploreSubmitDescription: 'Everything teams need to include in the final handoff.',
+  homeExploreProjectsDescription:
+    'Browse submitted ideas, see who is building them, and find teams to join.',
   homeGoalsTitle: 'Hackathon Goals',
   homeTimelineTitle: 'Hackathon timeline and key milestones',
   buildHeroTitle: 'Choose a problem worth solving and show why your concept matters.',
@@ -68,8 +72,8 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   judgingCriteriaTitle: 'What judges score',
   submitHeroTitle: 'Make your final handoff easy for judges to review and experience.',
   submitChecklistEyebrow: 'Submission checklist',
-  submitChecklistTitle: 'What teams need to hand off',
-  submitReminderTitle: 'Final reminder',
+  submitChecklistTitle: 'What teams need to include',
+  submitDeadline: '',
   buildIntro:
     'Your team can tackle business workflows, AI-assisted experiences, operational tooling, internal portals, or customer-facing apps as long as Rayfin is a meaningful part of the solution.',
   judgingIntro:
@@ -179,40 +183,22 @@ export const defaultBlocks: ContentBlockRecord[] = [
     sortOrder: 4,
   },
   {
+    id: ids.judgingReward,
+    pageKey: 'judging',
+    blockKind: 'reward',
+    title: 'Rewards and celebrating your success',
+    body:
+      'Winning teams can be recognized with prizes, shout-outs, leadership visibility, or showcase opportunities. Use this section to explain what success looks like after judging and how teams will be celebrated.',
+    sortOrder: 5,
+  },
+  {
     id: ids.submit1,
     pageKey: 'submit',
     blockKind: 'submission',
-    title: 'Project summary',
+    title: 'Submission checklist',
     body:
-      'Share the team name, members, problem statement, target audience, and a concise explanation of what you built.',
+      'Include your project summary, primary demo or repository links, setup notes for judges, and the most important product feedback your team filed.',
     sortOrder: 1,
-  },
-  {
-    id: ids.submit2,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'Demo assets',
-    body:
-      'Include a short demo video or walkthrough plus screenshots that highlight the primary user flow and differentiators.',
-    sortOrder: 2,
-  },
-  {
-    id: ids.submit3,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'Technical details',
-    body:
-      'Provide a repository link, architecture notes, setup instructions, and call out where Rayfin is used in the build.',
-    sortOrder: 3,
-  },
-  {
-    id: ids.submit4,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'How judges access it',
-    body:
-      'Explain exactly how judges can try the app, review the code, and understand any constraints or known limitations.',
-    sortOrder: 4,
   },
 ];
 
@@ -278,6 +264,7 @@ export function getNavigationItems(settings: SiteSettingsRecord) {
     { to: '/build', label: settings.navBuildLabel },
     { to: '/judging', label: settings.navJudgingLabel },
     { to: '/submit', label: settings.navSubmitLabel },
+    { to: '/projects', label: settings.navProjectsLabel },
   ] as const;
 }
 

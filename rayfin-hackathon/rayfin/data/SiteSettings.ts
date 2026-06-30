@@ -14,6 +14,7 @@ export class SiteSettings {
   @text({ max: 120, optional: true }) navBuildLabel?: string;
   @text({ max: 120, optional: true }) navJudgingLabel?: string;
   @text({ max: 120, optional: true }) navSubmitLabel?: string;
+  @text({ max: 120, optional: true }) navProjectsLabel?: string;
   @text({ max: 120 }) heroBadge!: string;
   @text({ max: 160 }) bannerTitle!: string;
   @text({ max: 1000 }) bannerDescription!: string;
@@ -25,6 +26,7 @@ export class SiteSettings {
   @text({ max: 300, optional: true }) homeExploreBuildDescription?: string;
   @text({ max: 300, optional: true }) homeExploreJudgingDescription?: string;
   @text({ max: 300, optional: true }) homeExploreSubmitDescription?: string;
+  @text({ max: 300, optional: true }) homeExploreProjectsDescription?: string;
   @text({ max: 160, optional: true }) homeGoalsTitle?: string;
   @text({ max: 200, optional: true }) homeTimelineTitle?: string;
   @text({ max: 200, optional: true }) buildHeroTitle?: string;
@@ -36,7 +38,7 @@ export class SiteSettings {
   @text({ max: 200, optional: true }) submitHeroTitle?: string;
   @text({ max: 120, optional: true }) submitChecklistEyebrow?: string;
   @text({ max: 160, optional: true }) submitChecklistTitle?: string;
-  @text({ max: 160, optional: true }) submitReminderTitle?: string;
+  @text({ max: 40, optional: true }) submitDeadline?: string;
   @text({ max: 1200 }) buildIntro!: string;
   @text({ max: 1200 }) judgingIntro!: string;
   @text({ max: 1200 }) submitIntro!: string;

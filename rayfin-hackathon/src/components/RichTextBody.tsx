@@ -75,7 +75,7 @@ function renderParagraphContent(paragraph: string, paragraphIndex: number) {
 }
 
 interface RichTextBodyProps {
-  body: string;
+  body?: string | null;
   className?: string;
   paragraphClassName?: string;
 }
@@ -83,11 +83,13 @@ interface RichTextBodyProps {
 export function RichTextBody({
   body,
   className = 'space-y-3',
-  paragraphClassName = 'text-sm leading-7 text-slate-600',
+  paragraphClassName = 'text-base leading-8 text-slate-700',
 }: RichTextBodyProps) {
+  const normalizedBody = typeof body === 'string' ? body : '';
+
   return (
     <div className={className}>
-      {body.split('\n').map((paragraph, index) => (
+      {normalizedBody.split('\n').map((paragraph, index) => (
         <p
           key={`paragraph-${index}-${paragraph}`}
           className={paragraphClassName}

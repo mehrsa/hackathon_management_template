@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
-import { registrationOpenLabel } from '@/content/registration';
 import { HomePage } from '@/pages/HomePage';
 
 const useSitePageContextMock = vi.fn();
@@ -13,15 +12,6 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 }));
 
 describe('HomePage', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 5, 30, 12, 0, 0));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('shows the editable welcome section content from site settings', () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
@@ -40,6 +30,9 @@ describe('HomePage', () => {
             'Choose an app concept and review [starter kits](https://example.com/starter-kits).',
           homeExploreJudgingDescription: 'Understand how the final project is scored.',
           homeExploreSubmitDescription: 'See what the judges expect in the final handoff.',
+          navProjectsLabel: 'Proposed projects',
+          homeExploreProjectsDescription:
+            'Browse project ideas and reach out to teams you want to join.',
         },
         blocks: defaultSiteData.blocks.map((block) =>
           block.id === '22222222-2222-4222-8222-111111111111'
@@ -96,7 +89,7 @@ describe('HomePage', () => {
       'href',
       '/build'
     );
-    expect(screen.getByRole('link', { name: 'Judging criteria' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Judging Criteria & Rewards' })).toHaveAttribute(
       'href',
       '/judging'
     );
@@ -104,17 +97,26 @@ describe('HomePage', () => {
       'href',
       '/submit'
     );
+    expect(screen.getByRole('link', { name: 'Proposed projects' })).toHaveAttribute(
+      'href',
+      '/projects'
+    );
     expect(screen.getByRole('link', { name: 'starter kits' })).toHaveAttribute(
       'href',
       'https://example.com/starter-kits'
     );
-    expect(screen.getByText(registrationOpenLabel)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Register now' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Register now' })).toHaveAttribute(
+      'href',
+      '/register'
+    );
     expect(
       screen.getByText('Understand how the final project is scored.')
     ).toBeInTheDocument();
     expect(
       screen.getByText('See what the judges expect in the final handoff.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Browse project ideas and reach out to teams you want to join.')
     ).toBeInTheDocument();
   });
 
@@ -160,32 +162,5 @@ describe('HomePage', () => {
     expect(screen.queryByText('Hackathon announcement')).not.toBeInTheDocument();
     expect(screen.queryByText('Explore the hackathon')).not.toBeInTheDocument();
     expect(screen.queryByText('Main page')).not.toBeInTheDocument();
-  });
-
-  it('enables registration on and after July 1st 2026', () => {
-    vi.setSystemTime(new Date(2026, 6, 1, 0, 0, 0));
-
-    useSitePageContextMock.mockReturnValue({
-      isEditing: false,
-      siteData: defaultSiteData,
-      saving: false,
-      saveSettings: vi.fn(),
-      saveBlock: vi.fn(),
-      removeBlock: vi.fn(),
-      saveTimelineMilestone: vi.fn(),
-      removeTimelineMilestone: vi.fn(),
-    });
-
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByRole('link', { name: 'Register now' })).toHaveAttribute(
-      'href',
-      defaultSiteData.settings.registerUrl
-    );
-    expect(screen.queryByText(registrationOpenLabel)).not.toBeInTheDocument();
   });
 });
