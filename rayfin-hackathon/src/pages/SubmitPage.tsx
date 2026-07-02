@@ -138,7 +138,7 @@ export function SubmitPage() {
               onDelete={removeBlock}
               canDelete={false}
               showCallToActionFields={true}
-              bodyPlaceholder="Describe what teams need to submit. Use [link text](https://example.com) for supporting resources."
+              bodyPlaceholder="Describe what teams need to submit and format the checklist with lists, emphasis, colors, and links."
             />
           </div>
         ) : null}
@@ -370,7 +370,7 @@ export function SubmitPage() {
                 },
                 {
                   key: 'submitIntro',
-                  label: 'Page introduction (supports [link text](https://example.com))',
+                  label: 'Page introduction',
                   multiline: true,
                 },
                 {

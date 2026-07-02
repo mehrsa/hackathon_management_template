@@ -102,17 +102,11 @@ describe('RegistrationPage', () => {
 
     await screen.findByText(/Signed in as/i);
 
-    await user.clear(
+    expect(
       screen.getByRole('textbox', {
-        name: 'This form will record your name, please fill your name.',
+        name: 'Project lead email',
       })
-    );
-    await user.type(
-      screen.getByRole('textbox', {
-        name: 'This form will record your name, please fill your name.',
-      }),
-      'Member Example'
-    );
+    ).toHaveValue('member@example.com');
     await user.type(screen.getByRole('textbox', { name: /1\. Project title/i }), 'Team Atlas');
     await user.type(
       screen.getByRole('textbox', { name: /2\. Full names of team members/i }),
@@ -138,7 +132,7 @@ describe('RegistrationPage', () => {
         expect.objectContaining({
           ownerUserId: 'user-1',
           ownerEmail: 'member@example.com',
-          submitterName: 'Member Example',
+          submitterName: 'member@example.com',
           projectTitle: 'Team Atlas',
           teamMembers: 'Member Example, Jane Doe',
           teamEmails: 'member@example.com, jane@example.com',

@@ -1,18 +1,38 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
 import { HomePage } from '@/pages/HomePage';
 
+const fetchFinalProjectSubmissionsMock = vi.fn();
+const fetchProjectSubmissionsMock = vi.fn();
 const useSitePageContextMock = vi.fn();
 
 vi.mock('@/hooks/useSitePageContext', () => ({
   useSitePageContext: () => useSitePageContextMock(),
 }));
 
+vi.mock('@/services/finalProjectSubmissions', () => ({
+  fetchFinalProjectSubmissions: (...args: unknown[]) =>
+    fetchFinalProjectSubmissionsMock(...args),
+}));
+
+vi.mock('@/services/projectSubmissions', () => ({
+  fetchProjectSubmissions: (...args: unknown[]) => fetchProjectSubmissionsMock(...args),
+}));
+
 describe('HomePage', () => {
-  it('shows the editable welcome section content from site settings', () => {
+  beforeEach(() => {
+    fetchFinalProjectSubmissionsMock.mockReset();
+    fetchProjectSubmissionsMock.mockReset();
+    useSitePageContextMock.mockReset();
+
+    fetchProjectSubmissionsMock.mockResolvedValue([]);
+    fetchFinalProjectSubmissionsMock.mockResolvedValue([]);
+  });
+
+  it('shows the editable welcome section content from site settings', async () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: {
@@ -118,9 +138,12 @@ describe('HomePage', () => {
     expect(
       screen.getByText('Browse project ideas and reach out to teams you want to join.')
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
   });
 
-  it('shows the updated home page headings without the old labels', () => {
+  it('shows the updated home page headings without the old labels', async () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: defaultSiteData,
@@ -162,5 +185,107 @@ describe('HomePage', () => {
     expect(screen.queryByText('Hackathon announcement')).not.toBeInTheDocument();
     expect(screen.queryByText('Explore the hackathon')).not.toBeInTheDocument();
     expect(screen.queryByText('Main page')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
+  });
+
+  it('shows aggregate registration and submission stats in the banner', async () => {
+    fetchProjectSubmissionsMock.mockResolvedValueOnce([
+      {
+        id: 'submission-1',
+        ownerUserId: 'user-1',
+        ownerEmail: 'lead1@example.com',
+        submitterName: 'lead1@example.com',
+        projectTitle: 'Team Atlas',
+        teamMembers: 'Member Example, Jane Doe',
+        teamEmails: 'lead1@example.com, jane@example.com',
+        appTheme: 'AI onboarding assistant',
+        teamRoles: 'Member Example - Engineer, Jane Doe - Designer',
+        createdAt: '2026-06-29T10:00:00.000Z',
+        updatedAt: '2026-06-29T12:00:00.000Z',
+      },
+      {
+        id: 'submission-2',
+        ownerUserId: 'user-2',
+        ownerEmail: 'lead2@example.com',
+        submitterName: 'lead2@example.com',
+        projectTitle: 'Team Nova',
+        teamMembers: 'Builder Example, Sam Doe, Jordan Roe',
+        teamEmails: 'lead2@example.com, sam@example.com, jordan@example.com',
+        appTheme: 'Incident response workspace',
+        teamRoles: 'Builder Example - Lead, Sam Doe - PM, Jordan Roe - Engineer',
+        createdAt: '2026-06-28T10:00:00.000Z',
+        updatedAt: '2026-06-29T13:00:00.000Z',
+      },
+    ]);
+    fetchFinalProjectSubmissionsMock.mockResolvedValueOnce([
+      {
+        id: 'final-1',
+        ownerUserId: 'user-1',
+        ownerEmail: 'lead1@example.com',
+        submitterName: 'Lead One',
+        teamName: 'Team Atlas',
+        teamMembers: 'Member Example\nJane Doe',
+        projectSummary: 'A polished summary.',
+        assetLinks: 'https://github.com/example/repo',
+        feedbackNotes: '- Filed #12',
+        createdAt: '2026-06-29T10:00:00.000Z',
+        updatedAt: '2026-06-29T12:00:00.000Z',
+      },
+    ]);
+    useSitePageContextMock.mockReturnValue({
+      isEditing: false,
+      siteData: defaultSiteData,
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      saveTimelineMilestone: vi.fn(),
+      removeTimelineMilestone: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    const teamsCard = (await screen.findByText('Teams')).closest('article');
+    const registrantsCard = screen.getByText('Registrants').closest('article');
+    const submissionsCard = screen.getByText('Submissions').closest('article');
+
+    expect(teamsCard).not.toBeNull();
+    expect(registrantsCard).not.toBeNull();
+    expect(submissionsCard).not.toBeNull();
+    expect(teamsCard).toHaveTextContent('2');
+    expect(registrantsCard).toHaveTextContent('5');
+    expect(submissionsCard).toHaveTextContent('1');
+  });
+
+  it('uses the thinner banner aspect ratio for the hero image', async () => {
+    useSitePageContextMock.mockReturnValue({
+      isEditing: false,
+      siteData: defaultSiteData,
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      saveTimelineMilestone: vi.fn(),
+      removeTimelineMilestone: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByAltText('Rayfin Hackathon banner').parentElement).toHaveClass(
+      'aspect-[256/101]'
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
   });
 });

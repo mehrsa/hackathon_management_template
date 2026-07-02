@@ -1,4 +1,4 @@
-import hackerFishBannerImage from '@/assets/hacker-fish-banner.png';
+import newBannerImage from '@/assets/new_banner_2.png';
 import {
   DEFAULT_ADMIN_EMAIL,
   type AdminEmailRecord,
@@ -49,7 +49,7 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   bannerTitle: 'Build standout apps with Rayfin this July',
   bannerDescription:
     'Bring your best product idea, prototype quickly with Rayfin, and showcase a polished solution to judges and peers during the Rayfin Hackathon.',
-  bannerImageUrl: hackerFishBannerImage,
+  bannerImageUrl: newBannerImage,
   registerUrl: 'https://example.com/rayfin-hackathon-register',
   homeIntroTitle: 'Welcome to Rayfin Hackathon!',
   homeIntroBody:
@@ -261,10 +261,10 @@ export const emptyPersistedState: PersistedSiteState = {
 
 export function getNavigationItems(settings: SiteSettingsRecord) {
   return [
-    { to: '/build', label: settings.navBuildLabel },
     { to: '/judging', label: settings.navJudgingLabel },
-    { to: '/submit', label: settings.navSubmitLabel },
+    { to: '/build', label: settings.navBuildLabel },
     { to: '/projects', label: settings.navProjectsLabel },
+    { to: '/submit', label: settings.navSubmitLabel },
   ] as const;
 }
 
@@ -326,7 +326,9 @@ export function mergeDefinedValues<T extends object>(
 }
 
 function isLegacyBannerImageUrl(value: string): boolean {
-  return /(^|[\\/])rayfin(?:-[A-Za-z0-9_-]+)?\.png(?:[?#].*)?$/i.test(value);
+  return /(^|[\\/])(rayfin|hacker-fish-banner|new_banner)(?:-[A-Za-z0-9_-]+)?\.png(?:[?#].*)?$/i.test(
+    value
+  );
 }
 
 function mergeSiteSettings(

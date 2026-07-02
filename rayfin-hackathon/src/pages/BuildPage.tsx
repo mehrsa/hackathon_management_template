@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
@@ -18,6 +20,28 @@ export function BuildPage() {
   } = useSitePageContext();
   const blocks = getBlocksForPage(siteData.blocks, 'build');
   const nextSortOrder = useNextSortOrder(blocks);
+  const isAddingCardRef = useRef(false);
+
+  const handleAddIdeaCard = () => {
+    if (saving || isAddingCardRef.current) {
+      return;
+    }
+
+    isAddingCardRef.current = true;
+
+    void saveBlock({
+      id: crypto.randomUUID(),
+      pageKey: 'build',
+      blockKind: 'idea',
+      title: 'New build idea',
+      body: 'Describe the concept, audience, and why it would make a strong hackathon entry.',
+      sortOrder: nextSortOrder,
+    })
+      .catch(() => undefined)
+      .finally(() => {
+        isAddingCardRef.current = false;
+      });
+  };
 
   return (
     <div className="space-y-8">
@@ -55,7 +79,7 @@ export function BuildPage() {
                 },
                 {
                   key: 'buildIntro',
-                  label: 'Page introduction (supports [link text](https://example.com))',
+                  label: 'Page introduction',
                   multiline: true,
                 },
                 {
@@ -85,17 +109,7 @@ export function BuildPage() {
           {isEditing ? (
             <button
               type="button"
-              onClick={() =>
-                void saveBlock({
-                  id: crypto.randomUUID(),
-                  pageKey: 'build',
-                  blockKind: 'idea',
-                  title: 'New build idea',
-                  body:
-                    'Describe the concept, audience, and why it would make a strong hackathon entry.',
-                  sortOrder: nextSortOrder,
-                }).catch(() => undefined)
-              }
+              onClick={handleAddIdeaCard}
               disabled={saving}
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -143,7 +157,7 @@ export function BuildPage() {
                       deleteLabel="Delete idea card"
                       showImageField={true}
                       showCallToActionFields={true}
-                      bodyPlaceholder="Describe the idea. Use [link text](https://example.com) to turn words into a clickable link."
+                      bodyPlaceholder="Describe the idea, add links, and highlight key details with lists, bold text, or color."
                     />
                   </div>
                 ) : null}

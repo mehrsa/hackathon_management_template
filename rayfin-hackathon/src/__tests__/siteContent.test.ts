@@ -85,11 +85,39 @@ describe('site content defaults', () => {
     expect(merged.settings.navBuildLabel).toBe('Updated build label');
   });
 
-  it('replaces persisted legacy banner image URLs with the new hacker fish banner', () => {
+  it('replaces persisted legacy banner image URLs with the current default banner', () => {
     const merged = mergeSiteData(
       {
         ...defaultSiteSettings,
         bannerImageUrl: '/assets/rayfin-CVEgr5SR.png',
+      },
+      [],
+      [],
+      []
+    );
+
+    expect(merged.settings.bannerImageUrl).toBe(defaultSiteSettings.bannerImageUrl);
+  });
+
+  it('replaces persisted hacker fish banner image URLs with the current default banner', () => {
+    const merged = mergeSiteData(
+      {
+        ...defaultSiteSettings,
+        bannerImageUrl: '/assets/hacker-fish-banner-B2f4h9.png',
+      },
+      [],
+      [],
+      []
+    );
+
+    expect(merged.settings.bannerImageUrl).toBe(defaultSiteSettings.bannerImageUrl);
+  });
+
+  it('replaces persisted previous default banner image URLs with the current default banner', () => {
+    const merged = mergeSiteData(
+      {
+        ...defaultSiteSettings,
+        bannerImageUrl: '/assets/new_banner-D4h8k2Lm.png',
       },
       [],
       [],

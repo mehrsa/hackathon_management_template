@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -57,7 +57,7 @@ describe('SiteLayout', () => {
     });
   });
 
-  it('uses the updated green header theme for the top navigation', () => {
+  it('uses the sharper neutral header theme for the top navigation', () => {
     useSiteContentMock.mockReturnValue({
       siteData: {
         ...defaultSiteData,
@@ -90,10 +90,10 @@ describe('SiteLayout', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('banner')).toHaveClass('bg-emerald-50/80');
+    expect(screen.getByRole('banner')).toHaveClass('bg-white/88');
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Create with Rayfin' })).toHaveClass(
-      'bg-emerald-200'
+      'bg-slate-950'
     );
     expect(screen.queryByRole('link', { name: 'official brief' })).not.toBeInTheDocument();
     const registrationLinks = screen.getAllByRole('link', { name: 'Registration Portal' });
@@ -145,5 +145,47 @@ describe('SiteLayout', () => {
     );
 
     expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
+  });
+
+  it('orders top navigation items with registration first and admin last', () => {
+    useAuthMock.mockReturnValue(
+      buildAuthContext({
+        user: {
+          id: 'admin-1',
+          email: defaultSiteData.adminEmails[0].email,
+          name: 'Admin',
+        },
+      })
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/admin']}>
+        <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route path="admin" element={<div>Admin page</div>} />
+            <Route path="register" element={<div>Register page</div>} />
+            <Route path="judging" element={<div>Judging page</div>} />
+            <Route path="build" element={<div>Build page</div>} />
+            <Route path="projects" element={<div>Projects page</div>} />
+            <Route path="submit" element={<div>Submit page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const topNavigation = within(screen.getByRole('banner')).getByRole('navigation');
+    const linkNames = within(topNavigation)
+      .getAllByRole('link')
+      .map((link) => link.getAttribute('aria-label') ?? link.textContent ?? '');
+
+    expect(linkNames).toEqual([
+      'Home',
+      'Registration Portal',
+      defaultSiteData.settings.navJudgingLabel,
+      defaultSiteData.settings.navBuildLabel,
+      defaultSiteData.settings.navProjectsLabel,
+      defaultSiteData.settings.navSubmitLabel,
+      'Admin',
+    ]);
   });
 });

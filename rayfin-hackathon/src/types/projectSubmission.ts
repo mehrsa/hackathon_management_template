@@ -21,7 +21,7 @@ export function createEmptyProjectSubmission(user: AuthUser): ProjectSubmissionR
     id: crypto.randomUUID(),
     ownerUserId: user.id,
     ownerEmail: user.email,
-    submitterName: user.name,
+    submitterName: user.email,
     projectTitle: '',
     teamMembers: '',
     teamEmails: '',

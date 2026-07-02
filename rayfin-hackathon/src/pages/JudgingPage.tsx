@@ -57,7 +57,7 @@ export function JudgingPage() {
                 },
                 {
                   key: 'judgingIntro',
-                  label: 'Page introduction (supports [link text](https://example.com))',
+                  label: 'Page introduction',
                   multiline: true,
                 },
                 {
@@ -161,7 +161,7 @@ export function JudgingPage() {
                   onDelete={removeBlock}
                   canDelete={false}
                   deleteLabel="Delete rewards section"
-                  bodyPlaceholder="Explain rewards, recognition, or celebration plans. Use [link text](https://example.com) for supporting resources."
+                  bodyPlaceholder="Explain rewards, recognition, or celebration plans with lists, bold callouts, or supporting links."
                 />
               </div>
             ) : null}

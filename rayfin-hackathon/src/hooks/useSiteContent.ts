@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   canHideDefaultBlock,
-  defaultSiteData,
   emptyPersistedState,
   isDefaultAdminId,
   isDefaultBlockId,
@@ -22,6 +21,10 @@ import {
   updateSiteSettings,
   updateTimelineMilestone,
 } from '@/services/siteContent';
+import {
+  getRuntimeDefaultSiteData,
+  writeSiteDefaultSnapshot,
+} from '@/services/siteDefaultSnapshot';
 import type {
   AdminEmailRecord,
   ContentBlockRecord,
@@ -36,11 +39,28 @@ interface UseSiteContentOptions {
 }
 
 export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
-  const [siteData, setSiteData] = useState<SiteData>(defaultSiteData);
+  const [siteData, setSiteData] = useState<SiteData>(() => getRuntimeDefaultSiteData());
   const [persisted, setPersisted] = useState<PersistedSiteState>(emptyPersistedState);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const applySnapshot = useCallback((snapshot: Awaited<ReturnType<typeof fetchSiteContent>>) => {
+    const mergedSiteData = mergeSiteData(
+      snapshot.settings,
+      snapshot.blocks,
+      snapshot.timeline,
+      snapshot.adminEmails
+    );
+    setPersisted(snapshot.persisted);
+    setSiteData(mergedSiteData);
+    writeSiteDefaultSnapshot(mergedSiteData);
+  }, []);
+
+  const syncPersistedContent = useCallback(async () => {
+    const snapshot = await fetchSiteContent(includeAdminEmails);
+    applySnapshot(snapshot);
+  }, [applySnapshot, includeAdminEmails]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -48,22 +68,13 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
 
     if (!includeAdminEmails) {
       setPersisted(emptyPersistedState);
-      setSiteData(defaultSiteData);
+      setSiteData(getRuntimeDefaultSiteData());
       setLoading(false);
       return;
     }
 
     try {
-      const snapshot = await fetchSiteContent(includeAdminEmails);
-      setPersisted(snapshot.persisted);
-      setSiteData(
-        mergeSiteData(
-          snapshot.settings,
-          snapshot.blocks,
-          snapshot.timeline,
-          snapshot.adminEmails
-        )
-      );
+      await syncPersistedContent();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Unable to load hackathon content.'
@@ -71,7 +82,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
     } finally {
       setLoading(false);
     }
-  }, [includeAdminEmails]);
+  }, [includeAdminEmails, syncPersistedContent]);
 
   useEffect(() => {
     void refresh();
@@ -90,7 +101,11 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         }
 
         setPersisted((current) => ({ ...current, hasSettings: true }));
-        setSiteData((current) => ({ ...current, settings }));
+        setSiteData((current) => {
+          const nextSiteData = { ...current, settings };
+          writeSiteDefaultSnapshot(nextSiteData);
+          return nextSiteData;
+        });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Unable to save site settings.'
@@ -114,23 +129,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         } else {
           await createContentBlock(block);
         }
-
-        setPersisted((current) => ({
-          ...current,
-          blockIds: current.blockIds.includes(block.id)
-            ? current.blockIds
-            : [...current.blockIds, block.id],
-        }));
-
-        setSiteData((current) => ({
-          ...current,
-          blocks: mergeSiteData(
-            current.settings,
-            current.blocks.filter((item) => item.id !== block.id).concat(block),
-            current.timeline,
-            current.adminEmails
-          ).blocks,
-        }));
+        await syncPersistedContent();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to save content.');
         throw err;
@@ -138,7 +137,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         setSaving(false);
       }
     },
-    [persisted.blockIds]
+    [persisted.blockIds, syncPersistedContent]
   );
 
   const removeBlock = useCallback(
@@ -170,24 +169,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         } else if (persisted.blockIds.includes(id)) {
           await deleteContentBlock(id);
         }
-
-        setPersisted((current) =>
-          canHideDefaultPageBlock
-            ? {
-                ...current,
-                blockIds: current.blockIds.includes(id)
-                  ? current.blockIds
-                  : current.blockIds.concat(id),
-              }
-            : {
-                ...current,
-                blockIds: current.blockIds.filter((value) => value !== id),
-              }
-        );
-        setSiteData((current) => ({
-          ...current,
-          blocks: current.blocks.filter((item) => item.id !== id),
-        }));
+        await syncPersistedContent();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to delete content.');
         throw err;
@@ -195,7 +177,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         setSaving(false);
       }
     },
-    [persisted.blockIds, siteData.blocks]
+    [persisted.blockIds, siteData.blocks, syncPersistedContent]
   );
 
   const saveTimelineMilestone = useCallback(
@@ -217,15 +199,19 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
             : [...current.timelineIds, milestone.id],
         }));
 
-        setSiteData((current) => ({
-          ...current,
-          timeline: mergeSiteData(
-            current.settings,
-            current.blocks,
-            current.timeline.filter((item) => item.id !== milestone.id).concat(milestone),
-            current.adminEmails
-          ).timeline,
-        }));
+        setSiteData((current) => {
+          const nextSiteData = {
+            ...current,
+            timeline: mergeSiteData(
+              current.settings,
+              current.blocks,
+              current.timeline.filter((item) => item.id !== milestone.id).concat(milestone),
+              current.adminEmails
+            ).timeline,
+          };
+          writeSiteDefaultSnapshot(nextSiteData);
+          return nextSiteData;
+        });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Unable to save timeline milestone.'
@@ -256,10 +242,14 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
           ...current,
           timelineIds: current.timelineIds.filter((value) => value !== id),
         }));
-        setSiteData((current) => ({
-          ...current,
-          timeline: current.timeline.filter((item) => item.id !== id),
-        }));
+        setSiteData((current) => {
+          const nextSiteData = {
+            ...current,
+            timeline: current.timeline.filter((item) => item.id !== id),
+          };
+          writeSiteDefaultSnapshot(nextSiteData);
+          return nextSiteData;
+        });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Unable to delete timeline milestone.'
@@ -284,14 +274,16 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
           ...current,
           adminIds: current.adminIds.concat(adminEmail.id),
         }));
-        setSiteData((current) =>
-          mergeSiteData(
+        setSiteData((current) => {
+          const nextSiteData = mergeSiteData(
             current.settings,
             current.blocks,
             current.timeline,
             current.adminEmails.concat(adminEmail)
-          )
-        );
+          );
+          writeSiteDefaultSnapshot(nextSiteData);
+          return nextSiteData;
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to add admin email.');
         throw err;
@@ -320,14 +312,16 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
           ...current,
           adminIds: current.adminIds.filter((value) => value !== id),
         }));
-        setSiteData((current) =>
-          mergeSiteData(
+        setSiteData((current) => {
+          const nextSiteData = mergeSiteData(
             current.settings,
             current.blocks,
             current.timeline,
             current.adminEmails.filter((entry) => entry.id !== id)
-          )
-        );
+          );
+          writeSiteDefaultSnapshot(nextSiteData);
+          return nextSiteData;
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to remove admin email.');
         throw err;

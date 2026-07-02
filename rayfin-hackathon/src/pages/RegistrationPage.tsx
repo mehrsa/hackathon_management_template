@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, type HTMLInputTypeAttribute } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useSitePageContext } from '@/hooks/useSitePageContext';
@@ -29,12 +29,14 @@ interface RegistrationFieldConfig {
   label: string;
   description?: string;
   multiline?: boolean;
+  inputType?: HTMLInputTypeAttribute;
 }
 
 const registrationFields: RegistrationFieldConfig[] = [
   {
     name: 'submitterName',
-    label: 'This form will record your name, please fill your name.',
+    label: 'Project lead email',
+    inputType: 'email',
   },
   {
     name: 'projectTitle',
@@ -349,6 +351,7 @@ export function RegistrationPage() {
                       />
                     ) : (
                       <input
+                        type={field.inputType ?? 'text'}
                         name={field.name}
                         value={value}
                         onChange={handleChange}
