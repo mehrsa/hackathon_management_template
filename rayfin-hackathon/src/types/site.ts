@@ -1,7 +1,18 @@
 export const DEFAULT_ADMIN_EMAIL = 'mgolestaneh@microsoft.com';
 
-export type PageKey = 'home' | 'build' | 'judging' | 'submit';
-export type BlockKind = 'goal' | 'idea' | 'criterion' | 'reward' | 'submission';
+export type PageKey = 'home' | 'build' | 'judging' | 'submit' | 'resources';
+export type BlockKind =
+  | 'goal'
+  | 'idea'
+  | 'criterion'
+  | 'reward'
+  | 'submission'
+  | 'resource'
+  | 'recording'
+  | 'upcomingSession'
+  | 'resourceLibrarySection'
+  | 'resourceRecordingsSection'
+  | 'resourceUpcomingSessionsSection';
 
 export interface SiteSettingsRecord {
   id: string;

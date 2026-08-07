@@ -254,12 +254,16 @@ interface RichTextBodyProps {
   body?: string | null;
   className?: string;
   paragraphClassName?: string;
+  unorderedListClassName?: string;
+  unorderedListItemClassName?: string;
 }
 
 export function RichTextBody({
   body,
   className = 'space-y-3',
   paragraphClassName = 'text-base leading-8 text-slate-700',
+  unorderedListClassName = 'ml-5 list-disc space-y-2 text-base leading-8 text-slate-700 marker:text-slate-400',
+  unorderedListItemClassName = '',
 }: RichTextBodyProps) {
   const normalizedBody = typeof body === 'string' ? body : '';
   const segments = buildSegments(normalizedBody);
@@ -284,12 +288,12 @@ export function RichTextBody({
 
         if (segment.type === 'unordered-list') {
           return (
-            <ul
-              key={`segment-${index}`}
-              className="ml-5 list-disc space-y-2 text-base leading-8 text-slate-700 marker:text-slate-400"
-            >
+            <ul key={`segment-${index}`} className={unorderedListClassName}>
               {segment.lines.map((line, lineIndex) => (
-                <li key={`unordered-item-${index}-${lineIndex}`}>
+                <li
+                  key={`unordered-item-${index}-${lineIndex}`}
+                  className={unorderedListItemClassName}
+                >
                   {renderInlineContent(line, `unordered-item-${index}-${lineIndex}`)}
                 </li>
               ))}

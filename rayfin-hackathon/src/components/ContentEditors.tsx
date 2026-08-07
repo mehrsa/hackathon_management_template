@@ -7,6 +7,10 @@ import {
   type TextareaHTMLAttributes,
 } from 'react';
 
+import { CharacterLimitHint } from '@/components/CharacterLimitHint';
+import { CONTENT_BLOCK_LIMITS } from '@/constants/contentBlockLimits';
+import { SITE_SETTINGS_LIMITS } from '@/constants/siteSettingsLimits';
+import { TIMELINE_MILESTONE_LIMITS } from '@/constants/timelineMilestoneLimits';
 import type {
   ContentBlockRecord,
   SiteSettingsRecord,
@@ -125,12 +129,14 @@ function RichTextTextarea({
   onChange,
   placeholder,
   rows = 4,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   rows?: number;
+  maxLength?: number;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const toolbarButtons = useMemo(
@@ -246,10 +252,12 @@ function RichTextTextarea({
           rows={rows}
           value={value}
           placeholder={placeholder}
+          maxLength={maxLength}
           onChange={(event) => onChange(event.target.value)}
           className="min-h-[9rem] w-full resize-y rounded-b-[1.5rem] bg-transparent px-4 py-3 text-sm text-slate-900 outline-none"
         />
       </div>
+      <CharacterLimitHint value={value} maxLength={maxLength} />
       <span className="mt-2 block text-xs leading-5 text-slate-500">{richTextHelpText}</span>
     </label>
   );
@@ -262,6 +270,7 @@ export function FormField({
   multiline = false,
   placeholder,
   rows = 4,
+  maxLength,
 }: {
   label: string;
   value: string;
@@ -269,6 +278,7 @@ export function FormField({
   multiline?: boolean;
   placeholder?: string;
   rows?: TextareaHTMLAttributes<HTMLTextAreaElement>['rows'];
+  maxLength?: number;
 }) {
   const baseClassName =
     'w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
@@ -280,6 +290,7 @@ export function FormField({
       onChange={onChange}
       placeholder={placeholder}
       rows={rows}
+      maxLength={maxLength}
     />
   ) : (
     <label className="block">
@@ -287,9 +298,11 @@ export function FormField({
       <input
         value={value}
         placeholder={placeholder}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         className={baseClassName}
       />
+      <CharacterLimitHint value={value} maxLength={maxLength} />
     </label>
   );
 }
@@ -352,6 +365,7 @@ export function SiteSettingsInlineEditor({
             value={String(draft[field.key] ?? '')}
             multiline={field.multiline}
             placeholder={field.placeholder}
+            maxLength={SITE_SETTINGS_LIMITS[field.key]}
             onChange={(value) => updateField(field.key, value)}
           />
         ))}
@@ -384,6 +398,10 @@ interface ContentBlockInlineEditorProps {
   deleteLabel?: string;
   showImageField?: boolean;
   showCallToActionFields?: boolean;
+  callToActionLabelFieldLabel?: string;
+  callToActionUrlFieldLabel?: string;
+  callToActionLabelPlaceholder?: string;
+  callToActionUrlPlaceholder?: string;
   bodyLabel?: string;
   bodyPlaceholder?: string;
   className?: string;
@@ -400,6 +418,10 @@ export function ContentBlockInlineEditor({
   deleteLabel = 'Delete item',
   showImageField = false,
   showCallToActionFields = false,
+  callToActionLabelFieldLabel = 'CTA label',
+  callToActionUrlFieldLabel = 'CTA URL',
+  callToActionLabelPlaceholder,
+  callToActionUrlPlaceholder,
   bodyLabel = 'Body',
   bodyPlaceholder,
   className,
@@ -441,6 +463,7 @@ export function ContentBlockInlineEditor({
         <FormField
           label="Title"
           value={draft.title}
+          maxLength={CONTENT_BLOCK_LIMITS.title}
           onChange={(value) => setDraft((current) => ({ ...current, title: value }))}
         />
         <FormField
@@ -461,6 +484,7 @@ export function ContentBlockInlineEditor({
           value={draft.body}
           multiline={true}
           placeholder={bodyPlaceholder}
+          maxLength={CONTENT_BLOCK_LIMITS.body}
           onChange={(value) => setDraft((current) => ({ ...current, body: value }))}
         />
 
@@ -468,6 +492,7 @@ export function ContentBlockInlineEditor({
           <FormField
             label="Image URL"
             value={draft.imageUrl ?? ''}
+            maxLength={CONTENT_BLOCK_LIMITS.imageUrl}
             onChange={(value) =>
               setDraft((current) => ({
                 ...current,
@@ -480,8 +505,10 @@ export function ContentBlockInlineEditor({
         {showCallToActionFields ? (
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
-              label="CTA label"
+              label={callToActionLabelFieldLabel}
               value={draft.ctaLabel ?? ''}
+              placeholder={callToActionLabelPlaceholder}
+              maxLength={CONTENT_BLOCK_LIMITS.ctaLabel}
               onChange={(value) =>
                 setDraft((current) => ({
                   ...current,
@@ -490,8 +517,10 @@ export function ContentBlockInlineEditor({
               }
             />
             <FormField
-              label="CTA URL"
+              label={callToActionUrlFieldLabel}
               value={draft.ctaUrl ?? ''}
+              placeholder={callToActionUrlPlaceholder}
+              maxLength={CONTENT_BLOCK_LIMITS.ctaUrl}
               onChange={(value) =>
                 setDraft((current) => ({
                   ...current,
@@ -591,11 +620,13 @@ export function TimelineMilestoneInlineEditor({
         <FormField
           label="Date"
           value={draft.dateLabel}
+          maxLength={TIMELINE_MILESTONE_LIMITS.dateLabel}
           onChange={(value) => setDraft((current) => ({ ...current, dateLabel: value }))}
         />
         <FormField
           label="Milestone"
           value={draft.milestone}
+          maxLength={TIMELINE_MILESTONE_LIMITS.milestone}
           onChange={(value) => setDraft((current) => ({ ...current, milestone: value }))}
         />
       </div>
@@ -605,6 +636,7 @@ export function TimelineMilestoneInlineEditor({
           label="Description"
           value={draft.description}
           multiline={true}
+          maxLength={TIMELINE_MILESTONE_LIMITS.description}
           onChange={(value) =>
             setDraft((current) => ({ ...current, description: value }))
           }

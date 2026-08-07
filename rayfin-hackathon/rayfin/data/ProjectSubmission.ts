@@ -18,7 +18,7 @@ export class ProjectSubmission {
   @text({ max: 160 }) projectTitle!: string;
   @text({ max: 600 }) teamMembers!: string;
   @text({ max: 600 }) teamEmails!: string;
-  @text({ max: 240 }) appTheme!: string;
+  @text({ max: 2000 }) appTheme!: string;
   @text({ max: 2000 }) teamRoles!: string;
   @text({ max: 40 }) createdAt!: string;
   @text({ max: 40 }) updatedAt!: string;

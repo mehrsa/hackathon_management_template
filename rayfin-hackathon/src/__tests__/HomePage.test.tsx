@@ -43,7 +43,7 @@ describe('HomePage', () => {
           bannerDescription:
             'Review the [event details](https://example.com/event-details) before you register.',
           homeIntroBody:
-            'First paragraph.\nExplore the [event guide](https://example.com/guide).',
+            'First paragraph.\n- Explore the [event guide](https://example.com/guide).\n- Review the [starter agenda](https://example.com/agenda).',
           homeExploreTitle: 'Explore this event',
           navBuildLabel: 'Create with Rayfin',
           homeExploreBuildDescription:
@@ -96,6 +96,11 @@ describe('HomePage', () => {
       'href',
       'https://example.com/guide'
     );
+    expect(screen.getByRole('link', { name: 'starter agenda' })).toHaveAttribute(
+      'href',
+      'https://example.com/agenda'
+    );
+    expect(screen.getByRole('list').firstElementChild).toHaveClass('site-card');
     expect(screen.getByRole('link', { name: 'https://example.com/goals' })).toHaveAttribute(
       'href',
       'https://example.com/goals'
@@ -112,6 +117,10 @@ describe('HomePage', () => {
     expect(screen.getByRole('link', { name: 'Judging Criteria & Rewards' })).toHaveAttribute(
       'href',
       '/judging'
+    );
+    expect(screen.getByRole('link', { name: 'Resources' })).toHaveAttribute(
+      'href',
+      '/resources'
     );
     expect(screen.getByRole('link', { name: 'Submit your project' })).toHaveAttribute(
       'href',
@@ -174,6 +183,9 @@ describe('HomePage', () => {
       screen.getByText('A clear view of how entries will be evaluated.')
     ).toBeInTheDocument();
     expect(
+      screen.getByText('Curated docs, learning links, and starter material for participants.')
+    ).toBeInTheDocument();
+    expect(
       screen.getByText('Everything teams need to include in the final handoff.')
     ).toBeInTheDocument();
     expect(
@@ -182,6 +194,10 @@ describe('HomePage', () => {
     expect(screen.queryByText(/^Goals$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Milestones$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Pages$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 1$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 2$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 3$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Open$/)).not.toBeInTheDocument();
     expect(screen.queryByText('Hackathon announcement')).not.toBeInTheDocument();
     expect(screen.queryByText('Explore the hackathon')).not.toBeInTheDocument();
     expect(screen.queryByText('Main page')).not.toBeInTheDocument();

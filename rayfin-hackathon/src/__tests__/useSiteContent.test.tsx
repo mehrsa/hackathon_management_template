@@ -7,12 +7,16 @@ import type { ContentBlockRecord } from '@/types/site';
 
 const {
   fetchSiteContentMock,
+  createSiteSettingsMock,
+  updateSiteSettingsMock,
   createContentBlockMock,
   updateContentBlockMock,
   deleteContentBlockMock,
   writeSiteDefaultSnapshotMock,
 } = vi.hoisted(() => ({
   fetchSiteContentMock: vi.fn(),
+  createSiteSettingsMock: vi.fn(),
+  updateSiteSettingsMock: vi.fn(),
   createContentBlockMock: vi.fn(),
   updateContentBlockMock: vi.fn(),
   deleteContentBlockMock: vi.fn(),
@@ -21,8 +25,8 @@ const {
 
 vi.mock('@/services/siteContent', () => ({
   fetchSiteContent: fetchSiteContentMock,
-  createSiteSettings: vi.fn(),
-  updateSiteSettings: vi.fn(),
+  createSiteSettings: createSiteSettingsMock,
+  updateSiteSettings: updateSiteSettingsMock,
   createContentBlock: createContentBlockMock,
   updateContentBlock: updateContentBlockMock,
   deleteContentBlock: deleteContentBlockMock,
@@ -41,6 +45,56 @@ vi.mock('@/services/siteDefaultSnapshot', () => ({
 describe('useSiteContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('re-syncs site settings from persisted content after saving a deadline', async () => {
+    const updatedSettings = {
+      ...defaultSiteData.settings,
+      submitDeadline: '2026-07-23T16:00:00.000Z',
+    };
+
+    createSiteSettingsMock.mockResolvedValue(undefined);
+    fetchSiteContentMock
+      .mockResolvedValueOnce({
+        settings: null,
+        blocks: [],
+        timeline: [],
+        adminEmails: [],
+        persisted: emptyPersistedState,
+      })
+      .mockResolvedValueOnce({
+        settings: updatedSettings,
+        blocks: [],
+        timeline: [],
+        adminEmails: [],
+        persisted: {
+          ...emptyPersistedState,
+          hasSettings: true,
+        },
+      });
+
+    const { result } = renderHook(() => useSiteContent({ includeAdminEmails: true }));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.saveSettings(updatedSettings);
+    });
+
+    expect(createSiteSettingsMock).toHaveBeenCalledWith(updatedSettings);
+    expect(updateSiteSettingsMock).not.toHaveBeenCalled();
+    expect(fetchSiteContentMock).toHaveBeenCalledTimes(2);
+    expect(result.current.persisted.hasSettings).toBe(true);
+    expect(result.current.siteData.settings.submitDeadline).toBe(updatedSettings.submitDeadline);
+    expect(writeSiteDefaultSnapshotMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          submitDeadline: updatedSettings.submitDeadline,
+        }),
+      })
+    );
   });
 
   it('re-syncs build cards from persisted content after saving a new block', async () => {

@@ -1,11 +1,13 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
+import { CharacterLimitHint } from '@/components/CharacterLimitHint';
 import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
 } from '@/components/ContentEditors';
 import { RichTextBody } from '@/components/RichTextBody';
+import { FINAL_PROJECT_SUBMISSION_LIMITS } from '@/constants/finalProjectSubmissionLimits';
 import { getBlocksForPage } from '@/content/defaultContent';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import {
@@ -32,15 +34,18 @@ interface SubmissionFieldConfig {
   description: string;
   multiline?: boolean;
   rows?: number;
-  lockedAfterSubmission?: boolean;
+  maxLength: number;
 }
+
+const SUBMISSION_DEADLINE_NOTICE =
+  'Submission deadline is end of day July 31st of your local timezone.';
 
 const submissionFields: SubmissionFieldConfig[] = [
   {
     name: 'teamName',
     label: '1. Team name',
     description: 'Use the final team name you want judges to see on your submission.',
-    lockedAfterSubmission: true,
+    maxLength: FINAL_PROJECT_SUBMISSION_LIMITS.teamName,
   },
   {
     name: 'teamMembers',
@@ -48,7 +53,7 @@ const submissionFields: SubmissionFieldConfig[] = [
     description: 'List every teammate on its own line or separate names with commas.',
     multiline: true,
     rows: 4,
-    lockedAfterSubmission: true,
+    maxLength: FINAL_PROJECT_SUBMISSION_LIMITS.teamMembers,
   },
   {
     name: 'projectSummary',
@@ -56,6 +61,7 @@ const submissionFields: SubmissionFieldConfig[] = [
     description: 'Share a concise 2-3 sentence overview of the project and the problem it solves.',
     multiline: true,
     rows: 5,
+    maxLength: FINAL_PROJECT_SUBMISSION_LIMITS.projectSummary,
   },
   {
     name: 'assetLinks',
@@ -64,6 +70,7 @@ const submissionFields: SubmissionFieldConfig[] = [
       'Paste one item per line, such as your GitHub repo, demo recording, deck, or any other handoff materials.',
     multiline: true,
     rows: 5,
+    maxLength: FINAL_PROJECT_SUBMISSION_LIMITS.assetLinks,
   },
   {
     name: 'feedbackNotes',
@@ -72,6 +79,7 @@ const submissionFields: SubmissionFieldConfig[] = [
       'Add bullet points or links that highlight product feedback, bugs, or GitHub issues your team filed.',
     multiline: true,
     rows: 5,
+    maxLength: FINAL_PROJECT_SUBMISSION_LIMITS.feedbackNotes,
   },
 ];
 
@@ -94,10 +102,6 @@ export function SubmitPage() {
   const [savingSubmission, setSavingSubmission] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [submittedIdentity, setSubmittedIdentity] = useState<Pick<
-    FinalProjectSubmissionRecord,
-    'teamName' | 'teamMembers'
-  > | null>(null);
 
   const deadlineLabel = formatDeadlineForDisplay(siteData.settings.submitDeadline);
   const submissionClosed = isSubmissionClosed(siteData.settings.submitDeadline);
@@ -184,7 +188,6 @@ export function SubmitPage() {
       setForm(null);
       setHasRegistration(false);
       setHasPersistedSubmission(false);
-      setSubmittedIdentity(null);
       setLoadingSubmission(false);
       return;
     }
@@ -222,14 +225,6 @@ export function SubmitPage() {
 
         setHasRegistration(Boolean(registration) || Boolean(submission));
         setHasPersistedSubmission(Boolean(submission));
-        setSubmittedIdentity(
-          submission
-            ? {
-                teamName: submission.teamName,
-                teamMembers: submission.teamMembers,
-              }
-            : null
-        );
         setForm(
           submission ??
             createEmptyFinalProjectSubmission(currentUser, {
@@ -285,12 +280,10 @@ export function SubmitPage() {
     }
 
     const now = new Date().toISOString();
-    const teamName = submittedIdentity?.teamName ?? form.teamName.trim();
-    const teamMembers = submittedIdentity?.teamMembers ?? form.teamMembers.trim();
     const trimmedForm: FinalProjectSubmissionRecord = {
       ...form,
-      teamName,
-      teamMembers,
+      teamName: form.teamName.trim(),
+      teamMembers: form.teamMembers.trim(),
       projectSummary: form.projectSummary.trim(),
       assetLinks: form.assetLinks.trim(),
       feedbackNotes: form.feedbackNotes.trim(),
@@ -314,14 +307,8 @@ export function SubmitPage() {
         setSaveMessage('Your project submission has been updated.');
       } else {
         await createFinalProjectSubmission(trimmedForm);
-        setSaveMessage(
-          'Your project has been submitted. Team name and team members are now locked.'
-        );
+        setSaveMessage('Your project has been submitted.');
         setHasPersistedSubmission(true);
-        setSubmittedIdentity({
-          teamName: trimmedForm.teamName,
-          teamMembers: trimmedForm.teamMembers,
-        });
       }
 
       setForm(trimmedForm);
@@ -417,7 +404,7 @@ export function SubmitPage() {
               >
                 {submissionClosed
                   ? `Submissions closed on ${deadlineLabel}.`
-                  : `Submission deadline: ${deadlineLabel}.`}
+                  : SUBMISSION_DEADLINE_NOTICE}
               </div>
             ) : null}
 
@@ -452,24 +439,8 @@ export function SubmitPage() {
               </div>
             ) : (
               <form className="mt-6 space-y-6" onSubmit={(event) => void handleSubmit(event)}>
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  {hasPersistedSubmission ? (
-                    <>
-                      <span className="font-semibold">Locked fields:</span> team name and team
-                      members cannot change after the first submission, but you can still update the
-                      rest of the handoff before the deadline.
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-semibold">Required:</span> team name and team members
-                      lock after your first project submission.
-                    </>
-                  )}
-                </div>
-
                 {submissionFields.map((field) => {
                   const value = form[field.name];
-                  const isLocked = Boolean(field.lockedAfterSubmission && hasPersistedSubmission);
 
                   return (
                     <label key={field.name} className="block space-y-2">
@@ -480,24 +451,30 @@ export function SubmitPage() {
                         {field.description}
                       </span>
                       {field.multiline ? (
-                        <textarea
-                          name={field.name}
-                          value={value}
-                          onChange={handleChange}
-                          required={true}
-                          disabled={isLocked}
-                          rows={field.rows ?? 4}
-                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-                        />
+                        <>
+                          <textarea
+                            name={field.name}
+                            value={value}
+                            onChange={handleChange}
+                            required={true}
+                            maxLength={field.maxLength}
+                            rows={field.rows ?? 4}
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                          />
+                          <CharacterLimitHint value={value} maxLength={field.maxLength} />
+                        </>
                       ) : (
-                        <input
-                          name={field.name}
-                          value={value}
-                          onChange={handleChange}
-                          required={true}
-                          disabled={isLocked}
-                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-                        />
+                        <>
+                          <input
+                            name={field.name}
+                            value={value}
+                            onChange={handleChange}
+                            required={true}
+                            maxLength={field.maxLength}
+                            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                          />
+                          <CharacterLimitHint value={value} maxLength={field.maxLength} />
+                        </>
                       )}
                     </label>
                   );
@@ -534,8 +511,8 @@ export function SubmitPage() {
             </p>
             <h2 className="mt-2 text-xl font-semibold">Need to register or update details first?</h2>
             <p className="mt-3 text-sm leading-7 text-blue-900/85">
-              Use the Registration Portal to register your team or modify your details before the
-              first project submission.
+              Use the Registration Portal to register your team before submitting your final
+              project.
             </p>
             <Link
               to="/register"

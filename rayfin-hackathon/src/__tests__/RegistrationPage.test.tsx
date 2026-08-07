@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PROJECT_SUBMISSION_LIMITS } from '@/constants/projectSubmissionLimits';
 import { defaultSiteData } from '@/content/defaultContent';
 import { RegistrationPage } from '@/pages/RegistrationPage';
 
@@ -145,6 +146,29 @@ describe('RegistrationPage', () => {
     });
 
     expect(await screen.findByText('Your registration has been saved.')).toBeInTheDocument();
+  });
+
+  it('shows visible character limits for registration fields', async () => {
+    fetchMyProjectSubmissionMock.mockResolvedValueOnce(null);
+    useSitePageContextMock.mockReturnValue(buildPageContext());
+
+    render(
+      <MemoryRouter>
+        <RegistrationPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/Signed in as/i);
+
+    expect(
+      screen.getByText(`18 / ${PROJECT_SUBMISSION_LIMITS.submitterName} characters`)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`0 / ${PROJECT_SUBMISSION_LIMITS.projectTitle} characters`)
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(`0 / ${PROJECT_SUBMISSION_LIMITS.teamMembers} characters`)).toHaveLength(
+      2
+    );
   });
 
   it('lets a participant unregister before the deadline after confirming the warning', async () => {

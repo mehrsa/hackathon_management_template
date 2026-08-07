@@ -1,3 +1,4 @@
+import { CONTENT_BLOCK_LIMITS } from '@/constants/contentBlockLimits';
 import { defaultSiteSettings, mergeDefinedValues } from '@/content/defaultContent';
 import { getRayfinClient } from '@/services/rayfinClient';
 import type {
@@ -83,7 +84,13 @@ export interface SiteContentSnapshot {
 let submitDeadlineSupported: boolean | null = null;
 
 function toPageKey(value: string): PageKey {
-  if (value === 'home' || value === 'build' || value === 'judging' || value === 'submit') {
+  if (
+    value === 'home' ||
+    value === 'build' ||
+    value === 'judging' ||
+    value === 'submit' ||
+    value === 'resources'
+  ) {
     return value;
   }
 
@@ -96,7 +103,13 @@ function toBlockKind(value: string): BlockKind {
     value === 'idea' ||
     value === 'criterion' ||
     value === 'reward' ||
-    value === 'submission'
+    value === 'submission' ||
+    value === 'resource' ||
+    value === 'recording' ||
+    value === 'upcomingSession' ||
+    value === 'resourceLibrarySection' ||
+    value === 'resourceRecordingsSection' ||
+    value === 'resourceUpcomingSessionsSection'
   ) {
     return value;
   }
@@ -130,6 +143,20 @@ function normalizeText(value: string | null | undefined): string {
 
 function normalizeOptionalText(value: string | null | undefined): string | undefined {
   return typeof value === 'string' ? value : undefined;
+}
+
+function validateMaxLength(label: string, value: string | undefined, max: number) {
+  if (value && value.length > max) {
+    throw new Error(`${label} must be ${max} characters or fewer.`);
+  }
+}
+
+function validateContentBlock(block: ContentBlockRecord) {
+  validateMaxLength('Title', block.title, CONTENT_BLOCK_LIMITS.title);
+  validateMaxLength('Body', block.body, CONTENT_BLOCK_LIMITS.body);
+  validateMaxLength('Image URL', block.imageUrl, CONTENT_BLOCK_LIMITS.imageUrl);
+  validateMaxLength('Button label', block.ctaLabel, CONTENT_BLOCK_LIMITS.ctaLabel);
+  validateMaxLength('Link URL', block.ctaUrl, CONTENT_BLOCK_LIMITS.ctaUrl);
 }
 
 async function withTimeout<T>(
@@ -286,11 +313,13 @@ export async function updateSiteSettings(settings: SiteSettingsRecord) {
 }
 
 export async function createContentBlock(block: ContentBlockRecord) {
+  validateContentBlock(block);
   const client = getRayfinClient();
   await client.data.ContentBlock.create(block);
 }
 
 export async function updateContentBlock(block: ContentBlockRecord) {
+  validateContentBlock(block);
   const client = getRayfinClient();
   await client.data.ContentBlock.update({ id: block.id }, block);
 }

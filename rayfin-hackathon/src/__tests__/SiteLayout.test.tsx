@@ -166,6 +166,7 @@ describe('SiteLayout', () => {
             <Route path="register" element={<div>Register page</div>} />
             <Route path="judging" element={<div>Judging page</div>} />
             <Route path="build" element={<div>Build page</div>} />
+            <Route path="resources" element={<div>Resources page</div>} />
             <Route path="projects" element={<div>Projects page</div>} />
             <Route path="submit" element={<div>Submit page</div>} />
           </Route>
@@ -183,6 +184,7 @@ describe('SiteLayout', () => {
       'Registration Portal',
       defaultSiteData.settings.navJudgingLabel,
       defaultSiteData.settings.navBuildLabel,
+      'Resources',
       defaultSiteData.settings.navProjectsLabel,
       defaultSiteData.settings.navSubmitLabel,
       'Admin',

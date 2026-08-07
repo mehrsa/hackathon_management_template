@@ -29,6 +29,14 @@ const ids = {
   submit2: '55555555-5555-4555-8555-222222222222',
   submit3: '55555555-5555-4555-8555-333333333333',
   submit4: '55555555-5555-4555-8555-444444444444',
+  resourcesLibrarySection: '88888888-8888-4888-8888-000000000001',
+  resourcesRecordingsSection: '88888888-8888-4888-8888-000000000002',
+  resourcesUpcomingSection: '88888888-8888-4888-8888-000000000003',
+  resources1: '88888888-8888-4888-8888-111111111111',
+  resources2: '88888888-8888-4888-8888-222222222222',
+  resources3: '88888888-8888-4888-8888-333333333333',
+  resourcesRecording1: '88888888-8888-4888-8888-444444444444',
+  resourcesUpcoming1: '88888888-8888-4888-8888-555555555555',
   timeline1: '66666666-6666-4666-8666-111111111111',
   timeline2: '66666666-6666-4666-8666-222222222222',
   timeline3: '66666666-6666-4666-8666-333333333333',
@@ -200,6 +208,85 @@ export const defaultBlocks: ContentBlockRecord[] = [
       'Include your project summary, primary demo or repository links, setup notes for judges, and the most important product feedback your team filed.',
     sortOrder: 1,
   },
+  {
+    id: ids.resourcesLibrarySection,
+    pageKey: 'resources',
+    blockKind: 'resourceLibrarySection',
+    title: 'Learning Library',
+    body: 'Docs, guides, repos, and quick references participants can use any time during the hackathon.',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resourcesRecordingsSection,
+    pageKey: 'resources',
+    blockKind: 'resourceRecordingsSection',
+    title: 'Recordings',
+    body: 'Keep replays, walkthroughs, and demos in one place so nobody misses the key sessions.',
+    sortOrder: 2,
+  },
+  {
+    id: ids.resourcesUpcomingSection,
+    pageKey: 'resources',
+    blockKind: 'resourceUpcomingSessionsSection',
+    title: 'Upcoming sessions',
+    body: 'Share office hours and upcoming sessions here. Add the Teams meeting link to each card so attendees can open it or add it to their calendar.',
+    sortOrder: 3,
+  },
+  {
+    id: ids.resources1,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Rayfin and Fabric documentation',
+    body:
+      'Start with the official documentation for Rayfin and Fabric concepts, product guidance, and core references teams can use while planning and building.',
+    ctaLabel: 'Open docs',
+    ctaUrl: 'https://learn.microsoft.com/fabric/',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resources2,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Build ideas and prompts',
+    body:
+      'Share internal starter prompts, prior examples, and your own guidance so teams can pick a direction faster and learn from previous work.',
+    ctaLabel: 'Review build guidance',
+    ctaUrl: '/build',
+    sortOrder: 2,
+  },
+  {
+    id: ids.resources3,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Submission prep',
+    body:
+      'Keep the final checklist, judging expectations, and demo packaging notes in one place so participants know exactly how to finish strong.',
+    ctaLabel: 'See submission page',
+    ctaUrl: '/submit',
+    sortOrder: 3,
+  },
+  {
+    id: ids.resourcesRecording1,
+    pageKey: 'resources',
+    blockKind: 'recording',
+    title: 'Kickoff session recording',
+    body:
+      'Post the session replay, demo walkthrough, or recap notes here so late joiners can catch up quickly.',
+    ctaLabel: 'Watch recording',
+    ctaUrl: 'https://example.com/rayfin-kickoff-recording',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resourcesUpcoming1,
+    pageKey: 'resources',
+    blockKind: 'upcomingSession',
+    title: 'Office hours',
+    body:
+      'Share the next live support session, what it will cover, and how participants should prepare before joining.',
+    ctaLabel: 'Add to calendar',
+    ctaUrl: 'https://teams.microsoft.com/l/meetup-join/example',
+    sortOrder: 1,
+  },
 ];
 
 export const defaultTimeline: TimelineMilestoneRecord[] = [
@@ -263,6 +350,7 @@ export function getNavigationItems(settings: SiteSettingsRecord) {
   return [
     { to: '/judging', label: settings.navJudgingLabel },
     { to: '/build', label: settings.navBuildLabel },
+    { to: '/resources', label: 'Resources' },
     { to: '/projects', label: settings.navProjectsLabel },
     { to: '/submit', label: settings.navSubmitLabel },
   ] as const;
@@ -285,7 +373,11 @@ export function canHideDefaultBlock(block: ContentBlockRecord): boolean {
 
   return (
     (block.pageKey === 'build' && block.blockKind === 'idea') ||
-    (block.pageKey === 'submit' && block.blockKind === 'submission')
+    (block.pageKey === 'submit' && block.blockKind === 'submission') ||
+    (block.pageKey === 'resources' &&
+      (block.blockKind === 'resource' ||
+        block.blockKind === 'recording' ||
+        block.blockKind === 'upcomingSession'))
   );
 }
 

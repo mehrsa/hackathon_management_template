@@ -57,6 +57,11 @@ export function HomePage() {
       description: siteData.settings.homeExploreSubmitDescription,
     },
     {
+      href: '/resources',
+      title: 'Resources',
+      description: 'Curated docs, learning links, and starter material for participants.',
+    },
+    {
       href: '/projects',
       title: siteData.settings.navProjectsLabel,
       description: siteData.settings.homeExploreProjectsDescription,
@@ -224,6 +229,8 @@ export function HomePage() {
             body={siteData.settings.homeIntroBody}
             className="mt-4 max-w-3xl space-y-3"
             paragraphClassName="text-base leading-8 text-slate-700"
+            unorderedListClassName="grid list-none gap-3 pt-2 sm:grid-cols-2"
+            unorderedListItemClassName="site-card rounded-2xl border border-slate-200/80 bg-slate-50/85 p-4 text-sm leading-7 text-slate-700 shadow-sm"
           />
 
           {isEditing ? (
@@ -248,14 +255,17 @@ export function HomePage() {
         </div>
 
         <div className="rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-emerald-950">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">
+            Quick links
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold text-emerald-950">
             {siteData.settings.homeExploreTitle}
           </h2>
           <div className="mt-4 grid gap-3">
             {exploreItems.map((item) => (
               <article
                 key={item.href}
-                className="site-card group relative rounded-2xl bg-white/90 p-4"
+                className="site-card group relative overflow-hidden rounded-2xl border border-white/80 bg-white/92 p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
               >
                 <Link
                   to={item.href}
@@ -265,13 +275,17 @@ export function HomePage() {
                   <span className="sr-only">{item.title}</span>
                 </Link>
                 <div className="pointer-events-none relative z-10">
-                  <h3 className="font-semibold text-slate-950 transition group-hover:text-blue-700">
-                    {item.title}
-                  </h3>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-slate-950 transition group-hover:text-blue-700">
+                        {item.title}
+                      </h3>
+                    </div>
+                  </div>
                   <RichTextBody
                     body={item.description}
-                    className="mt-1 space-y-2"
-                    paragraphClassName="text-base leading-7 text-slate-700"
+                    className="mt-3 space-y-2"
+                    paragraphClassName="text-sm leading-7 text-slate-700"
                   />
                 </div>
               </article>

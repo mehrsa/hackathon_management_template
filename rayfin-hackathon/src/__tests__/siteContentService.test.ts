@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteSettings } from '@/content/defaultContent';
+import type { ContentBlockRecord } from '@/types/site';
 
 const getRayfinClientMock = vi.fn();
 
@@ -16,6 +17,8 @@ function createMockClient() {
   const siteSettingsSelect = vi.fn();
   const siteSettingsCreate = vi.fn();
   const siteSettingsUpdate = vi.fn();
+  const contentBlockCreate = vi.fn().mockResolvedValue(undefined);
+  const contentBlockUpdate = vi.fn().mockResolvedValue(undefined);
   const contentBlocksExecute = vi.fn().mockResolvedValue([]);
   const timelineExecute = vi.fn().mockResolvedValue([]);
   const adminExecute = vi.fn().mockResolvedValue([]);
@@ -29,6 +32,8 @@ function createMockClient() {
           update: siteSettingsUpdate,
         },
         ContentBlock: {
+          create: contentBlockCreate,
+          update: contentBlockUpdate,
           select: vi.fn(() => ({
             orderBy: vi.fn(() => ({
               execute: contentBlocksExecute,
@@ -52,6 +57,8 @@ function createMockClient() {
     siteSettingsSelect,
     siteSettingsCreate,
     siteSettingsUpdate,
+    contentBlockCreate,
+    contentBlockUpdate,
   };
 }
 
@@ -144,5 +151,49 @@ describe('site content service', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('accepts recording links longer than 500 characters', async () => {
+    const { client, contentBlockCreate } = createMockClient();
+    getRayfinClientMock.mockReturnValue(client);
+
+    const recordingBlock: ContentBlockRecord = {
+      id: '11111111-1111-4111-8111-111111111111',
+      pageKey: 'resources',
+      blockKind: 'recording',
+      title: 'Deep dive replay',
+      body: 'Watch the replay for the full walkthrough.',
+      ctaLabel: 'Watch recording',
+      ctaUrl: `https://example.com/${'r'.repeat(580)}`,
+      sortOrder: 4,
+    };
+
+    const { createContentBlock } = await import('@/services/siteContent');
+    await createContentBlock(recordingBlock);
+
+    expect(contentBlockCreate).toHaveBeenCalledWith(recordingBlock);
+  });
+
+  it('rejects content block links that exceed the supported maximum length', async () => {
+    const { client, contentBlockCreate } = createMockClient();
+    getRayfinClientMock.mockReturnValue(client);
+
+    const recordingBlock: ContentBlockRecord = {
+      id: '22222222-2222-4222-8222-222222222222',
+      pageKey: 'resources',
+      blockKind: 'recording',
+      title: 'Deep dive replay',
+      body: 'Watch the replay for the full walkthrough.',
+      ctaLabel: 'Watch recording',
+      ctaUrl: `https://example.com/${'r'.repeat(2100)}`,
+      sortOrder: 4,
+    };
+
+    const { createContentBlock } = await import('@/services/siteContent');
+
+    await expect(createContentBlock(recordingBlock)).rejects.toThrow(
+      'Link URL must be 2048 characters or fewer.'
+    );
+    expect(contentBlockCreate).not.toHaveBeenCalled();
   });
 });

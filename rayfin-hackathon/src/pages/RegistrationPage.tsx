@@ -1,6 +1,8 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent, type HTMLInputTypeAttribute } from 'react';
 import { Link } from 'react-router-dom';
 
+import { CharacterLimitHint } from '@/components/CharacterLimitHint';
+import { PROJECT_SUBMISSION_LIMITS } from '@/constants/projectSubmissionLimits';
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import {
   deleteFinalProjectSubmission,
@@ -30,6 +32,7 @@ interface RegistrationFieldConfig {
   description?: string;
   multiline?: boolean;
   inputType?: HTMLInputTypeAttribute;
+  maxLength: number;
 }
 
 const registrationFields: RegistrationFieldConfig[] = [
@@ -37,11 +40,13 @@ const registrationFields: RegistrationFieldConfig[] = [
     name: 'submitterName',
     label: 'Project lead email',
     inputType: 'email',
+    maxLength: PROJECT_SUBMISSION_LIMITS.submitterName,
   },
   {
     name: 'projectTitle',
     label: '1. Project title',
     description: 'Give your proposed app a clear, specific title.',
+    maxLength: PROJECT_SUBMISSION_LIMITS.projectTitle,
   },
   {
     name: 'teamMembers',
@@ -49,6 +54,7 @@ const registrationFields: RegistrationFieldConfig[] = [
     description:
       'Enter comma-separated full names of all Microsoft FTEs in your team. If registering individually, include your own name.',
     multiline: true,
+    maxLength: PROJECT_SUBMISSION_LIMITS.teamMembers,
   },
   {
     name: 'teamEmails',
@@ -56,11 +62,13 @@ const registrationFields: RegistrationFieldConfig[] = [
     description:
       'Enter the Microsoft email addresses for all team members, separated by commas.',
     multiline: true,
+    maxLength: PROJECT_SUBMISSION_LIMITS.teamEmails,
   },
   {
     name: 'appTheme',
     label: '4. Theme of your app',
     description: 'Use case, industry, scenario, or idea.',
+    maxLength: PROJECT_SUBMISSION_LIMITS.appTheme,
   },
   {
     name: 'teamRoles',
@@ -68,6 +76,7 @@ const registrationFields: RegistrationFieldConfig[] = [
     description:
       'Specify the role of each team member beside their name. Example: Jane Doe - Product Manager.',
     multiline: true,
+    maxLength: PROJECT_SUBMISSION_LIMITS.teamRoles,
   },
 ];
 
@@ -341,23 +350,31 @@ export function RegistrationPage() {
                       </span>
                     ) : null}
                     {field.multiline ? (
-                      <textarea
-                        name={field.name}
-                        value={value}
-                        onChange={handleChange}
-                        required={true}
-                        rows={4}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-                      />
+                     <>
+                       <textarea
+                         name={field.name}
+                         value={value}
+                         onChange={handleChange}
+                         required={true}
+                         maxLength={field.maxLength}
+                         rows={4}
+                         className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                       />
+                       <CharacterLimitHint value={value} maxLength={field.maxLength} />
+                     </>
                     ) : (
-                      <input
-                        type={field.inputType ?? 'text'}
-                        name={field.name}
-                        value={value}
-                        onChange={handleChange}
-                        required={true}
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-                      />
+                     <>
+                       <input
+                         type={field.inputType ?? 'text'}
+                         name={field.name}
+                         value={value}
+                         onChange={handleChange}
+                         required={true}
+                         maxLength={field.maxLength}
+                         className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                       />
+                       <CharacterLimitHint value={value} maxLength={field.maxLength} />
+                     </>
                     )}
                   </label>
                 );

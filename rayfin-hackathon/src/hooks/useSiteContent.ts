@@ -99,13 +99,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         } else {
           await createSiteSettings(settings);
         }
-
-        setPersisted((current) => ({ ...current, hasSettings: true }));
-        setSiteData((current) => {
-          const nextSiteData = { ...current, settings };
-          writeSiteDefaultSnapshot(nextSiteData);
-          return nextSiteData;
-        });
+        await syncPersistedContent();
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Unable to save site settings.'
@@ -115,7 +109,7 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
         setSaving(false);
       }
     },
-    [persisted.hasSettings]
+    [persisted.hasSettings, syncPersistedContent]
   );
 
   const saveBlock = useCallback(

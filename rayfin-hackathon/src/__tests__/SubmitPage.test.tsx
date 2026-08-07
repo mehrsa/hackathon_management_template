@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FINAL_PROJECT_SUBMISSION_LIMITS } from '@/constants/finalProjectSubmissionLimits';
 import { defaultSiteData } from '@/content/defaultContent';
 import { SubmitPage } from '@/pages/SubmitPage';
 
@@ -116,7 +117,7 @@ describe('SubmitPage', () => {
       'href',
       'https://example.com/submission-guide'
     );
-    expect(screen.getByDisplayValue('Team Atlas')).toBeDisabled();
+    expect(screen.getByDisplayValue('Team Atlas')).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Update my submission' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: defaultSiteData.settings.submitChecklistTitle })
@@ -146,7 +147,7 @@ describe('SubmitPage', () => {
     expect(screen.queryByRole('button', { name: 'Submit project' })).not.toBeInTheDocument();
   });
 
-  it('creates a new final submission for a registered user and then locks identity fields', async () => {
+  it('creates a new final submission for a registered user and keeps all fields editable', async () => {
     const user = userEvent.setup();
 
     createFinalProjectSubmissionMock.mockResolvedValueOnce(undefined);
@@ -200,13 +201,56 @@ describe('SubmitPage', () => {
     });
 
     expect(
-      await screen.findByText(
-        'Your project has been submitted. Team name and team members are now locked.'
-      )
+      await screen.findByText('Your project has been submitted.')
     ).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /1\. Team name/i })).toBeDisabled();
-    expect(screen.getByRole('textbox', { name: /2\. Team members/i })).toBeDisabled();
+    expect(screen.getByRole('textbox', { name: /1\. Team name/i })).toBeEnabled();
+    expect(screen.getByRole('textbox', { name: /2\. Team members/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Update my submission' })).toBeInTheDocument();
+  });
+
+  it('shows the local-time submission deadline copy while submissions are still open', async () => {
+    useSitePageContextMock.mockReturnValue({
+      ...buildPageContext(),
+      siteData: {
+        ...defaultSiteData,
+        settings: {
+          ...defaultSiteData.settings,
+          submitDeadline: '2099-07-31T23:59:00.000Z',
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <SubmitPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      await screen.findByText('Submission deadline is end of day July 31st of your local timezone.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows visible character limits for final submission fields', async () => {
+    useSitePageContextMock.mockReturnValue(buildPageContext());
+
+    render(
+      <MemoryRouter>
+        <SubmitPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText(/Signed in as/i);
+
+    expect(
+      screen.getByText(`0 / ${FINAL_PROJECT_SUBMISSION_LIMITS.teamName} characters`)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`0 / ${FINAL_PROJECT_SUBMISSION_LIMITS.projectSummary} characters`)
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(`0 / ${FINAL_PROJECT_SUBMISSION_LIMITS.assetLinks} characters`)).toHaveLength(
+      2
+    );
   });
 
   it('disables submission updates after the deadline', async () => {
