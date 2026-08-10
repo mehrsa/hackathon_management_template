@@ -30,9 +30,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background:
-      radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 28%),
-      radial-gradient(circle at top right, rgba(99, 102, 241, 0.14), transparent 26%),
-      linear-gradient(180deg, #f8fbff 0%, #eff5ff 48%, #f8fafc 100%);
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 24%),
+      radial-gradient(circle at top right, rgba(15, 23, 42, 0.08), transparent 28%),
+      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 44%, #ffffff 100%);
     color: #020617;
   }
 
@@ -41,11 +41,9 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background-image:
-      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-    background-size: 32px 32px;
-    mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 88%);
+    background:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.65), transparent 48%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.58), transparent 72%);
   }
 
   #root {
@@ -71,9 +69,9 @@
   .ambient-orb {
     position: absolute;
     border-radius: 9999px;
-    filter: blur(42px);
-    opacity: 0.55;
-    animation: ambient-float 18s ease-in-out infinite;
+    filter: blur(60px);
+    opacity: 0.35;
+    animation: ambient-float 22s ease-in-out infinite;
     pointer-events: none;
   }
 
@@ -82,9 +80,11 @@
   }
 
   .glass-panel {
-    background: rgba(255, 255, 255, 0.74);
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow:
+      0 24px 70px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(18px);
   }
 
@@ -93,11 +93,13 @@
       transform 220ms ease,
       box-shadow 220ms ease,
       border-color 220ms ease,
-      background-color 220ms ease;
+      background-color 220ms ease,
+      filter 220ms ease;
   }
 
   .site-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    filter: saturate(1.02);
   }
 }

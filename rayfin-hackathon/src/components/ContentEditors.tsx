@@ -1,10 +1,53 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from 'react';
 
+import { CharacterLimitHint } from '@/components/CharacterLimitHint';
+import { CONTENT_BLOCK_LIMITS } from '@/constants/contentBlockLimits';
+import { SITE_SETTINGS_LIMITS } from '@/constants/siteSettingsLimits';
+import { TIMELINE_MILESTONE_LIMITS } from '@/constants/timelineMilestoneLimits';
 import type {
   ContentBlockRecord,
   SiteSettingsRecord,
   TimelineMilestoneRecord,
 } from '@/types/site';
+
+const richTextHelpText =
+  'Supports bold, bullet lists, numbered lists, colors, and links. Use the toolbar or type **bold**, - item, 1. item, {blue}color{/blue}, and [link text](https://example.com).';
+
+const colorOptions = [
+  { name: 'blue', token: '{blue}', closingToken: '{/blue}', buttonClassName: 'text-blue-700' },
+  {
+    name: 'green',
+    token: '{green}',
+    closingToken: '{/green}',
+    buttonClassName: 'text-emerald-700',
+  },
+  {
+    name: 'amber',
+    token: '{amber}',
+    closingToken: '{/amber}',
+    buttonClassName: 'text-amber-700',
+  },
+  { name: 'rose', token: '{rose}', closingToken: '{/rose}', buttonClassName: 'text-rose-700' },
+  {
+    name: 'purple',
+    token: '{purple}',
+    closingToken: '{/purple}',
+    buttonClassName: 'text-violet-700',
+  },
+  {
+    name: 'slate',
+    token: '{slate}',
+    closingToken: '{/slate}',
+    buttonClassName: 'text-slate-700',
+  },
+] as const;
 
 function InlineEditorPanel({
   title,
@@ -20,7 +63,7 @@ function InlineEditorPanel({
   return (
     <section
       className={[
-        'rounded-3xl border border-blue-200/70 bg-white/95 p-5 shadow-lg shadow-blue-950/5 backdrop-blur',
+        'rounded-[1.75rem] border border-slate-200/80 bg-white/95 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur',
         className,
       ].join(' ')}
     >
@@ -33,41 +76,233 @@ function InlineEditorPanel({
   );
 }
 
+function applyWrappedSelection(
+  value: string,
+  selectionStart: number,
+  selectionEnd: number,
+  openingToken: string,
+  closingToken: string,
+  placeholder: string
+) {
+  const selectedText = value.slice(selectionStart, selectionEnd) || placeholder;
+  const nextValue = [
+    value.slice(0, selectionStart),
+    openingToken,
+    selectedText,
+    closingToken,
+    value.slice(selectionEnd),
+  ].join('');
+
+  return {
+    nextValue,
+    nextSelectionStart: selectionStart + openingToken.length,
+    nextSelectionEnd: selectionStart + openingToken.length + selectedText.length,
+  };
+}
+
+function applyLinePrefix(
+  value: string,
+  selectionStart: number,
+  selectionEnd: number,
+  getPrefix: (lineIndex: number) => string
+) {
+  const blockStart = value.lastIndexOf('\n', Math.max(selectionStart - 1, 0)) + 1;
+  const rawBlockEnd = value.indexOf('\n', selectionEnd);
+  const blockEnd = rawBlockEnd === -1 ? value.length : rawBlockEnd;
+  const selectedBlock = value.slice(blockStart, blockEnd);
+  const nextBlock = selectedBlock
+    .split('\n')
+    .map((line, lineIndex) => `${getPrefix(lineIndex)}${line}`)
+    .join('\n');
+  const nextValue = `${value.slice(0, blockStart)}${nextBlock}${value.slice(blockEnd)}`;
+
+  return {
+    nextValue,
+    nextSelectionStart: blockStart,
+    nextSelectionEnd: blockStart + nextBlock.length,
+  };
+}
+
+function RichTextTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+  maxLength?: number;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const toolbarButtons = useMemo(
+    () => [
+      {
+        label: 'Bold',
+        onApply: (currentValue: string, selectionStart: number, selectionEnd: number) =>
+          applyWrappedSelection(
+            currentValue,
+            selectionStart,
+            selectionEnd,
+            '**',
+            '**',
+            'bold text'
+          ),
+      },
+      {
+        label: 'Bullets',
+        onApply: (currentValue: string, selectionStart: number, selectionEnd: number) =>
+          applyLinePrefix(currentValue, selectionStart, selectionEnd, () => '- '),
+      },
+      {
+        label: 'Numbers',
+        onApply: (currentValue: string, selectionStart: number, selectionEnd: number) =>
+          applyLinePrefix(currentValue, selectionStart, selectionEnd, (lineIndex) => `${lineIndex + 1}. `),
+      },
+      {
+        label: 'Link',
+        onApply: (currentValue: string, selectionStart: number, selectionEnd: number) =>
+          applyWrappedSelection(
+            currentValue,
+            selectionStart,
+            selectionEnd,
+            '[',
+            '](https://example.com)',
+            'link text'
+          ),
+      },
+    ],
+    []
+  );
+
+  const applyTextChange = (
+    mutate: (currentValue: string, selectionStart: number, selectionEnd: number) => {
+      nextValue: string;
+      nextSelectionStart: number;
+      nextSelectionEnd: number;
+    }
+  ) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const { nextValue, nextSelectionStart, nextSelectionEnd } = mutate(
+      value,
+      textarea.selectionStart,
+      textarea.selectionEnd
+    );
+
+    onChange(nextValue);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(nextSelectionStart, nextSelectionEnd);
+    });
+  };
+
+  const buttonClassName =
+    'rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50';
+
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
+      <div className="rounded-[1.5rem] border border-slate-300 bg-white shadow-sm">
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 px-3 py-3">
+          {toolbarButtons.map((button) => (
+            <button
+              key={button.label}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => applyTextChange(button.onApply)}
+              className={buttonClassName}
+            >
+              {button.label}
+            </button>
+          ))}
+          {colorOptions.map((color) => (
+            <button
+              key={color.name}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() =>
+                applyTextChange((currentValue, selectionStart, selectionEnd) =>
+                  applyWrappedSelection(
+                    currentValue,
+                    selectionStart,
+                    selectionEnd,
+                    color.token,
+                    color.closingToken,
+                    `${color.name} text`
+                  )
+                )
+              }
+              className={`${buttonClassName} ${color.buttonClassName}`}
+            >
+              {color.name}
+            </button>
+          ))}
+        </div>
+        <textarea
+          ref={textareaRef}
+          rows={rows}
+          value={value}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          onChange={(event) => onChange(event.target.value)}
+          className="min-h-[9rem] w-full resize-y rounded-b-[1.5rem] bg-transparent px-4 py-3 text-sm text-slate-900 outline-none"
+        />
+      </div>
+      <CharacterLimitHint value={value} maxLength={maxLength} />
+      <span className="mt-2 block text-xs leading-5 text-slate-500">{richTextHelpText}</span>
+    </label>
+  );
+}
+
 export function FormField({
   label,
   value,
   onChange,
   multiline = false,
   placeholder,
+  rows = 4,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   multiline?: boolean;
   placeholder?: string;
+  rows?: TextareaHTMLAttributes<HTMLTextAreaElement>['rows'];
+  maxLength?: number;
 }) {
   const baseClassName =
     'w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
 
-  return (
+  return multiline ? (
+    <RichTextTextarea
+      label={label}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={rows}
+      maxLength={maxLength}
+    />
+  ) : (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
-      {multiline ? (
-        <textarea
-          rows={4}
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          className={`${baseClassName} resize-y`}
-        />
-      ) : (
-        <input
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-          className={baseClassName}
-        />
-      )}
+      <input
+        value={value}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        onChange={(event) => onChange(event.target.value)}
+        className={baseClassName}
+      />
+      <CharacterLimitHint value={value} maxLength={maxLength} />
     </label>
   );
 }
@@ -130,6 +365,7 @@ export function SiteSettingsInlineEditor({
             value={String(draft[field.key] ?? '')}
             multiline={field.multiline}
             placeholder={field.placeholder}
+            maxLength={SITE_SETTINGS_LIMITS[field.key]}
             onChange={(value) => updateField(field.key, value)}
           />
         ))}
@@ -162,6 +398,10 @@ interface ContentBlockInlineEditorProps {
   deleteLabel?: string;
   showImageField?: boolean;
   showCallToActionFields?: boolean;
+  callToActionLabelFieldLabel?: string;
+  callToActionUrlFieldLabel?: string;
+  callToActionLabelPlaceholder?: string;
+  callToActionUrlPlaceholder?: string;
   bodyLabel?: string;
   bodyPlaceholder?: string;
   className?: string;
@@ -178,7 +418,11 @@ export function ContentBlockInlineEditor({
   deleteLabel = 'Delete item',
   showImageField = false,
   showCallToActionFields = false,
-  bodyLabel = 'Body (supports [link text](https://example.com))',
+  callToActionLabelFieldLabel = 'CTA label',
+  callToActionUrlFieldLabel = 'CTA URL',
+  callToActionLabelPlaceholder,
+  callToActionUrlPlaceholder,
+  bodyLabel = 'Body',
   bodyPlaceholder,
   className,
 }: ContentBlockInlineEditorProps) {
@@ -219,6 +463,7 @@ export function ContentBlockInlineEditor({
         <FormField
           label="Title"
           value={draft.title}
+          maxLength={CONTENT_BLOCK_LIMITS.title}
           onChange={(value) => setDraft((current) => ({ ...current, title: value }))}
         />
         <FormField
@@ -239,6 +484,7 @@ export function ContentBlockInlineEditor({
           value={draft.body}
           multiline={true}
           placeholder={bodyPlaceholder}
+          maxLength={CONTENT_BLOCK_LIMITS.body}
           onChange={(value) => setDraft((current) => ({ ...current, body: value }))}
         />
 
@@ -246,6 +492,7 @@ export function ContentBlockInlineEditor({
           <FormField
             label="Image URL"
             value={draft.imageUrl ?? ''}
+            maxLength={CONTENT_BLOCK_LIMITS.imageUrl}
             onChange={(value) =>
               setDraft((current) => ({
                 ...current,
@@ -258,8 +505,10 @@ export function ContentBlockInlineEditor({
         {showCallToActionFields ? (
           <div className="grid gap-4 md:grid-cols-2">
             <FormField
-              label="CTA label"
+              label={callToActionLabelFieldLabel}
               value={draft.ctaLabel ?? ''}
+              placeholder={callToActionLabelPlaceholder}
+              maxLength={CONTENT_BLOCK_LIMITS.ctaLabel}
               onChange={(value) =>
                 setDraft((current) => ({
                   ...current,
@@ -268,8 +517,10 @@ export function ContentBlockInlineEditor({
               }
             />
             <FormField
-              label="CTA URL"
+              label={callToActionUrlFieldLabel}
               value={draft.ctaUrl ?? ''}
+              placeholder={callToActionUrlPlaceholder}
+              maxLength={CONTENT_BLOCK_LIMITS.ctaUrl}
               onChange={(value) =>
                 setDraft((current) => ({
                   ...current,
@@ -369,20 +620,23 @@ export function TimelineMilestoneInlineEditor({
         <FormField
           label="Date"
           value={draft.dateLabel}
+          maxLength={TIMELINE_MILESTONE_LIMITS.dateLabel}
           onChange={(value) => setDraft((current) => ({ ...current, dateLabel: value }))}
         />
         <FormField
           label="Milestone"
           value={draft.milestone}
+          maxLength={TIMELINE_MILESTONE_LIMITS.milestone}
           onChange={(value) => setDraft((current) => ({ ...current, milestone: value }))}
         />
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_140px]">
         <FormField
-          label="Description (supports [link text](https://example.com))"
+          label="Description"
           value={draft.description}
           multiline={true}
+          maxLength={TIMELINE_MILESTONE_LIMITS.description}
           onChange={(value) =>
             setDraft((current) => ({ ...current, description: value }))
           }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData, getBlocksForPage } from '@/content/defaultContent';
@@ -85,5 +85,31 @@ describe('BuildPage', () => {
     expect(screen.getAllByRole('button', { name: 'Delete idea card' })).toHaveLength(
       getBlocksForPage(defaultSiteData.blocks, 'build').length
     );
+  });
+
+  it('prevents duplicate idea cards from a rapid double click', () => {
+    const saveBlock = vi.fn(
+      () =>
+        new Promise<void>(() => {
+          // Keep the request pending so the synchronous re-entry guard stays active.
+        })
+    );
+
+    useSitePageContextMock.mockReturnValue({
+      isEditing: true,
+      siteData: defaultSiteData,
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock,
+      removeBlock: vi.fn(),
+    });
+
+    render(<BuildPage />);
+
+    const addButton = screen.getByRole('button', { name: 'Add idea card' });
+    fireEvent.click(addButton);
+    fireEvent.click(addButton);
+
+    expect(saveBlock).toHaveBeenCalledTimes(1);
   });
 });

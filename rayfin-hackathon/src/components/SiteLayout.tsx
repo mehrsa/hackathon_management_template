@@ -6,9 +6,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 
-import { RichTextBody } from '@/components/RichTextBody';
 import { getNavigationItems, isAdminEmail } from '@/content/defaultContent';
-import { isRegistrationOpen, registrationOpenLabel } from '@/content/registration';
 import { useAuth } from '@/hooks/AuthContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import type { AuthContextValue } from '@/hooks/AuthContext';
@@ -40,6 +38,22 @@ export interface SitePageContextValue {
   removeAdminEmail: (id: string) => Promise<void>;
 }
 
+const homeIcon = (
+  <svg
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className="h-4 w-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.5 12 3l9 7.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 9.75V21h13.5V9.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 21v-6h3v6" />
+  </svg>
+);
+
 export function SiteLayout() {
   const auth = useAuth();
   const [editingEnabled, setEditingEnabled] = useState(false);
@@ -65,17 +79,24 @@ export function SiteLayout() {
   );
   const canManageContent = isAdmin && !isPreviewMode;
   const isEditing = canManageContent && editingEnabled;
-  const registrationIsOpen = isRegistrationOpen();
   const navigationItems = useMemo(
-    () => getNavigationItems(siteData.settings),
-    [siteData.settings]
+    () => [
+      { to: '/register', label: 'Registration Portal' },
+      ...getNavigationItems(siteData.settings),
+      ...(isAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
+    ],
+    [isAdmin, siteData.settings]
   );
   const currentPageLabel =
     location.pathname === '/admin'
       ? 'Admin portal'
+      : location.pathname === '/admin/submissions'
+        ? 'Admin submission review'
+      : location.pathname === '/register'
+        ? 'Registration Portal'
       : location.pathname === '/'
-        ? 'Main page'
-        : navigationItems.find((item) => item.to === location.pathname)?.label ?? 'Main page';
+          ? 'Main page'
+          : navigationItems.find((item) => item.to === location.pathname)?.label ?? 'Main page';
 
   const requireAdminAccess = useCallback(() => {
     if (!isAdmin) {
@@ -188,44 +209,33 @@ export function SiteLayout() {
       <div className="ambient-orb ambient-orb-delay right-0 top-10 h-96 w-96 bg-indigo-200/60" />
       <div className="ambient-orb bottom-0 left-1/3 h-72 w-72 bg-cyan-100/70" />
 
-      <header className="sticky top-0 z-20 border-b border-emerald-100/80 bg-emerald-50/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <Link
-              to="/"
-              className="inline-flex bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-700 bg-clip-text text-xl font-bold tracking-tight text-transparent"
-            >
-              {siteData.settings.siteTitle}
-            </Link>
-            <RichTextBody
-              body={siteData.settings.siteDescription}
-              className="mt-1 max-w-2xl space-y-1"
-              paragraphClassName="text-sm text-slate-600"
-            />
-            {isAdmin ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
-                >
-                  Admin
-                </Link>
-                {isPreviewMode ? (
-                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
-                    Viewing as participant
-                  </span>
-                ) : null}
-                {isEditing ? (
-                  <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
-                    Edit mode
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/88 shadow-sm shadow-slate-900/5 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <Link
+            to="/"
+            className="inline-flex bg-gradient-to-r from-slate-950 via-slate-800 to-blue-700 bg-clip-text text-lg font-bold tracking-tight text-transparent md:text-xl"
+          >
+            {siteData.settings.siteTitle}
+          </Link>
 
-          <div className="flex flex-col gap-4 lg:items-end">
+          <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <nav className="flex flex-wrap items-center gap-2">
+              <NavLink
+                to="/"
+                end={true}
+                aria-label="Home"
+                className={({ isActive }) =>
+                  [
+                    'inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-medium transition duration-200',
+                    isActive
+                      ? 'bg-slate-950 text-white shadow-lg shadow-slate-900/10'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
+                  ].join(' ')
+                }
+              >
+                {homeIcon}
+                <span className="sr-only">Home</span>
+              </NavLink>
               {navigationItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -235,8 +245,8 @@ export function SiteLayout() {
                     [
                       'rounded-full px-4 py-2 text-sm font-medium transition duration-200',
                       isActive
-                        ? 'bg-emerald-200 text-emerald-950 shadow-lg shadow-emerald-950/10'
-                        : 'text-emerald-900 hover:bg-white/85 hover:text-emerald-950',
+                        ? 'bg-slate-950 text-white shadow-lg shadow-slate-900/10'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
                     ].join(' ')
                   }
                 >
@@ -245,11 +255,21 @@ export function SiteLayout() {
               ))}
             </nav>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+              {isPreviewMode ? (
+                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+                  Viewing as participant
+                </span>
+              ) : null}
+              {isEditing ? (
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                  Edit mode
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void auth.signOut()}
-                className="rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-900 transition hover:bg-white/80"
+                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
               >
                 Sign out
               </button>
@@ -270,23 +290,14 @@ export function SiteLayout() {
         </div>
       </main>
 
-      <footer className="relative z-10 mt-12 border-t border-white/60 bg-white/55 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-6 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
-          <p>{siteData.settings.siteTitle}</p>
+      <footer className="relative z-10 mt-12 border-t border-slate-200 bg-slate-950 text-slate-300">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-6 text-sm md:flex-row md:items-center md:justify-between">
+          <p className="font-medium text-white">{siteData.settings.siteTitle}</p>
           <div className="flex flex-wrap items-center gap-4">
             <span>Current page: {currentPageLabel}</span>
-            {registrationIsOpen ? (
-              <a
-                href={siteData.settings.registerUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="font-semibold text-blue-700 hover:text-blue-800"
-              >
-                Registration link
-              </a>
-            ) : (
-              <span className="font-semibold text-slate-500">{registrationOpenLabel}</span>
-            )}
+            <Link to="/register" className="font-semibold text-blue-300 transition hover:text-blue-200">
+              Registration Portal
+            </Link>
           </div>
         </div>
       </footer>

@@ -1,28 +1,38 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultSiteData } from '@/content/defaultContent';
-import { registrationOpenLabel } from '@/content/registration';
 import { HomePage } from '@/pages/HomePage';
 
+const fetchFinalProjectSubmissionsMock = vi.fn();
+const fetchProjectSubmissionsMock = vi.fn();
 const useSitePageContextMock = vi.fn();
 
 vi.mock('@/hooks/useSitePageContext', () => ({
   useSitePageContext: () => useSitePageContextMock(),
 }));
 
+vi.mock('@/services/finalProjectSubmissions', () => ({
+  fetchFinalProjectSubmissions: (...args: unknown[]) =>
+    fetchFinalProjectSubmissionsMock(...args),
+}));
+
+vi.mock('@/services/projectSubmissions', () => ({
+  fetchProjectSubmissions: (...args: unknown[]) => fetchProjectSubmissionsMock(...args),
+}));
+
 describe('HomePage', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 5, 30, 12, 0, 0));
+    fetchFinalProjectSubmissionsMock.mockReset();
+    fetchProjectSubmissionsMock.mockReset();
+    useSitePageContextMock.mockReset();
+
+    fetchProjectSubmissionsMock.mockResolvedValue([]);
+    fetchFinalProjectSubmissionsMock.mockResolvedValue([]);
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('shows the editable welcome section content from site settings', () => {
+  it('shows the editable welcome section content from site settings', async () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: {
@@ -33,13 +43,16 @@ describe('HomePage', () => {
           bannerDescription:
             'Review the [event details](https://example.com/event-details) before you register.',
           homeIntroBody:
-            'First paragraph.\nExplore the [event guide](https://example.com/guide).',
+            'First paragraph.\n- Explore the [event guide](https://example.com/guide).\n- Review the [starter agenda](https://example.com/agenda).',
           homeExploreTitle: 'Explore this event',
           navBuildLabel: 'Create with Rayfin',
           homeExploreBuildDescription:
             'Choose an app concept and review [starter kits](https://example.com/starter-kits).',
           homeExploreJudgingDescription: 'Understand how the final project is scored.',
           homeExploreSubmitDescription: 'See what the judges expect in the final handoff.',
+          navProjectsLabel: 'Proposed projects',
+          homeExploreProjectsDescription:
+            'Browse project ideas and reach out to teams you want to join.',
         },
         blocks: defaultSiteData.blocks.map((block) =>
           block.id === '22222222-2222-4222-8222-111111111111'
@@ -83,6 +96,11 @@ describe('HomePage', () => {
       'href',
       'https://example.com/guide'
     );
+    expect(screen.getByRole('link', { name: 'starter agenda' })).toHaveAttribute(
+      'href',
+      'https://example.com/agenda'
+    );
+    expect(screen.getByRole('list').firstElementChild).toHaveClass('site-card');
     expect(screen.getByRole('link', { name: 'https://example.com/goals' })).toHaveAttribute(
       'href',
       'https://example.com/goals'
@@ -96,29 +114,45 @@ describe('HomePage', () => {
       'href',
       '/build'
     );
-    expect(screen.getByRole('link', { name: 'Judging criteria' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Judging Criteria & Rewards' })).toHaveAttribute(
       'href',
       '/judging'
+    );
+    expect(screen.getByRole('link', { name: 'Resources' })).toHaveAttribute(
+      'href',
+      '/resources'
     );
     expect(screen.getByRole('link', { name: 'Submit your project' })).toHaveAttribute(
       'href',
       '/submit'
     );
+    expect(screen.getByRole('link', { name: 'Proposed projects' })).toHaveAttribute(
+      'href',
+      '/projects'
+    );
     expect(screen.getByRole('link', { name: 'starter kits' })).toHaveAttribute(
       'href',
       'https://example.com/starter-kits'
     );
-    expect(screen.getByText(registrationOpenLabel)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Register now' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Register now' })).toHaveAttribute(
+      'href',
+      '/register'
+    );
     expect(
       screen.getByText('Understand how the final project is scored.')
     ).toBeInTheDocument();
     expect(
       screen.getByText('See what the judges expect in the final handoff.')
     ).toBeInTheDocument();
+    expect(
+      screen.getByText('Browse project ideas and reach out to teams you want to join.')
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
   });
 
-  it('shows the updated home page headings without the old labels', () => {
+  it('shows the updated home page headings without the old labels', async () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: defaultSiteData,
@@ -149,6 +183,9 @@ describe('HomePage', () => {
       screen.getByText('A clear view of how entries will be evaluated.')
     ).toBeInTheDocument();
     expect(
+      screen.getByText('Curated docs, learning links, and starter material for participants.')
+    ).toBeInTheDocument();
+    expect(
       screen.getByText('Everything teams need to include in the final handoff.')
     ).toBeInTheDocument();
     expect(
@@ -157,14 +194,62 @@ describe('HomePage', () => {
     expect(screen.queryByText(/^Goals$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Milestones$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Pages$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 1$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 2$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Stop 3$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Open$/)).not.toBeInTheDocument();
     expect(screen.queryByText('Hackathon announcement')).not.toBeInTheDocument();
     expect(screen.queryByText('Explore the hackathon')).not.toBeInTheDocument();
     expect(screen.queryByText('Main page')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
   });
 
-  it('enables registration on and after July 1st 2026', () => {
-    vi.setSystemTime(new Date(2026, 6, 1, 0, 0, 0));
-
+  it('shows aggregate registration and submission stats in the banner', async () => {
+    fetchProjectSubmissionsMock.mockResolvedValueOnce([
+      {
+        id: 'submission-1',
+        ownerUserId: 'user-1',
+        ownerEmail: 'lead1@example.com',
+        submitterName: 'lead1@example.com',
+        projectTitle: 'Team Atlas',
+        teamMembers: 'Member Example, Jane Doe',
+        teamEmails: 'lead1@example.com, jane@example.com',
+        appTheme: 'AI onboarding assistant',
+        teamRoles: 'Member Example - Engineer, Jane Doe - Designer',
+        createdAt: '2026-06-29T10:00:00.000Z',
+        updatedAt: '2026-06-29T12:00:00.000Z',
+      },
+      {
+        id: 'submission-2',
+        ownerUserId: 'user-2',
+        ownerEmail: 'lead2@example.com',
+        submitterName: 'lead2@example.com',
+        projectTitle: 'Team Nova',
+        teamMembers: 'Builder Example, Sam Doe, Jordan Roe',
+        teamEmails: 'lead2@example.com, sam@example.com, jordan@example.com',
+        appTheme: 'Incident response workspace',
+        teamRoles: 'Builder Example - Lead, Sam Doe - PM, Jordan Roe - Engineer',
+        createdAt: '2026-06-28T10:00:00.000Z',
+        updatedAt: '2026-06-29T13:00:00.000Z',
+      },
+    ]);
+    fetchFinalProjectSubmissionsMock.mockResolvedValueOnce([
+      {
+        id: 'final-1',
+        ownerUserId: 'user-1',
+        ownerEmail: 'lead1@example.com',
+        submitterName: 'Lead One',
+        teamName: 'Team Atlas',
+        teamMembers: 'Member Example\nJane Doe',
+        projectSummary: 'A polished summary.',
+        assetLinks: 'https://github.com/example/repo',
+        feedbackNotes: '- Filed #12',
+        createdAt: '2026-06-29T10:00:00.000Z',
+        updatedAt: '2026-06-29T12:00:00.000Z',
+      },
+    ]);
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: defaultSiteData,
@@ -182,10 +267,41 @@ describe('HomePage', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('link', { name: 'Register now' })).toHaveAttribute(
-      'href',
-      defaultSiteData.settings.registerUrl
+    const teamsCard = (await screen.findByText('Teams')).closest('article');
+    const registrantsCard = screen.getByText('Registrants').closest('article');
+    const submissionsCard = screen.getByText('Submissions').closest('article');
+
+    expect(teamsCard).not.toBeNull();
+    expect(registrantsCard).not.toBeNull();
+    expect(submissionsCard).not.toBeNull();
+    expect(teamsCard).toHaveTextContent('2');
+    expect(registrantsCard).toHaveTextContent('5');
+    expect(submissionsCard).toHaveTextContent('1');
+  });
+
+  it('uses the thinner banner aspect ratio for the hero image', async () => {
+    useSitePageContextMock.mockReturnValue({
+      isEditing: false,
+      siteData: defaultSiteData,
+      saving: false,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      saveTimelineMilestone: vi.fn(),
+      removeTimelineMilestone: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
     );
-    expect(screen.queryByText(registrationOpenLabel)).not.toBeInTheDocument();
+
+    expect(screen.getByAltText('Rayfin Hackathon banner').parentElement).toHaveClass(
+      'aspect-[256/101]'
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Teams').closest('article')).toHaveTextContent('0');
+    });
   });
 });

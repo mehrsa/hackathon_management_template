@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import {
   ContentBlockInlineEditor,
   SiteSettingsInlineEditor,
@@ -18,21 +20,43 @@ export function BuildPage() {
   } = useSitePageContext();
   const blocks = getBlocksForPage(siteData.blocks, 'build');
   const nextSortOrder = useNextSortOrder(blocks);
+  const isAddingCardRef = useRef(false);
+
+  const handleAddIdeaCard = () => {
+    if (saving || isAddingCardRef.current) {
+      return;
+    }
+
+    isAddingCardRef.current = true;
+
+    void saveBlock({
+      id: crypto.randomUUID(),
+      pageKey: 'build',
+      blockKind: 'idea',
+      title: 'New build idea',
+      body: 'Describe the concept, audience, and why it would make a strong hackathon entry.',
+      sortOrder: nextSortOrder,
+    })
+      .catch(() => undefined)
+      .finally(() => {
+        isAddingCardRef.current = false;
+      });
+  };
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-8 py-12 text-white shadow-xl">
-        <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-blue-400/20 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-8 py-9 text-white shadow-xl md:px-10 md:py-10">
+        <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-blue-400/20 blur-3xl" />
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-200">
           {siteData.settings.navBuildLabel}
         </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-3xl font-semibold tracking-tight md:text-4xl lg:text-[2.7rem]">
           {siteData.settings.buildHeroTitle}
         </h1>
         <RichTextBody
           body={siteData.settings.buildIntro}
           className="mt-4 max-w-3xl space-y-3"
-          paragraphClassName="text-base leading-8 text-slate-200"
+          paragraphClassName="text-[1.02rem] leading-8 text-slate-200"
         />
 
         {isEditing ? (
@@ -55,7 +79,7 @@ export function BuildPage() {
                 },
                 {
                   key: 'buildIntro',
-                  label: 'Page introduction (supports [link text](https://example.com))',
+                  label: 'Page introduction',
                   multiline: true,
                 },
                 {
@@ -85,17 +109,7 @@ export function BuildPage() {
           {isEditing ? (
             <button
               type="button"
-              onClick={() =>
-                void saveBlock({
-                  id: crypto.randomUUID(),
-                  pageKey: 'build',
-                  blockKind: 'idea',
-                  title: 'New build idea',
-                  body:
-                    'Describe the concept, audience, and why it would make a strong hackathon entry.',
-                  sortOrder: nextSortOrder,
-                }).catch(() => undefined)
-              }
+              onClick={handleAddIdeaCard}
               disabled={saving}
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -143,7 +157,7 @@ export function BuildPage() {
                       deleteLabel="Delete idea card"
                       showImageField={true}
                       showCallToActionFields={true}
-                      bodyPlaceholder="Describe the idea. Use [link text](https://example.com) to turn words into a clickable link."
+                      bodyPlaceholder="Describe the idea, add links, and highlight key details with lists, bold text, or color."
                     />
                   </div>
                 ) : null}

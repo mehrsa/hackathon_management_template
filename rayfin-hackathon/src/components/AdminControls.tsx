@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { CharacterLimitHint } from '@/components/CharacterLimitHint';
+import { ADMIN_EMAIL_LIMITS } from '@/constants/adminEmailLimits';
 import { getNavigationItems } from '@/content/defaultContent';
 import {
   DEFAULT_ADMIN_EMAIL,
@@ -229,8 +231,10 @@ export function AdminControls({
                 value={inviteEmail}
                 onChange={(event) => setInviteEmail(event.target.value)}
                 placeholder="teammate@example.com"
+                maxLength={ADMIN_EMAIL_LIMITS.email}
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
+              <CharacterLimitHint value={inviteEmail} maxLength={ADMIN_EMAIL_LIMITS.email} />
             </label>
 
             <button

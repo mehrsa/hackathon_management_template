@@ -17,22 +17,24 @@ export function JudgingPage() {
     removeBlock,
   } = useSitePageContext();
   const blocks = getBlocksForPage(siteData.blocks, 'judging');
-  const nextSortOrder = useNextSortOrder(blocks);
+  const criteria = blocks.filter((block) => block.blockKind === 'criterion');
+  const rewardsBlock = blocks.find((block) => block.blockKind === 'reward') ?? null;
+  const nextSortOrder = useNextSortOrder(criteria);
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 px-8 py-12 text-white shadow-xl">
-        <div className="absolute -right-8 top-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 px-8 py-9 text-white shadow-xl md:px-10 md:py-10">
+        <div className="absolute -right-8 top-8 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-100">
           {siteData.settings.navJudgingLabel}
         </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
+        <h1 className="mt-4 max-w-4xl text-3xl font-semibold tracking-tight md:text-4xl lg:text-[2.7rem]">
           {siteData.settings.judgingHeroTitle}
         </h1>
         <RichTextBody
           body={siteData.settings.judgingIntro}
           className="mt-4 max-w-3xl space-y-3"
-          paragraphClassName="text-base leading-8 text-slate-100"
+          paragraphClassName="text-[1.02rem] leading-8 text-slate-100"
         />
 
         {isEditing ? (
@@ -55,7 +57,7 @@ export function JudgingPage() {
                 },
                 {
                   key: 'judgingIntro',
-                  label: 'Page introduction (supports [link text](https://example.com))',
+                  label: 'Page introduction',
                   multiline: true,
                 },
                 {
@@ -104,7 +106,7 @@ export function JudgingPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {blocks.map((block, index) => (
+          {criteria.map((block, index) => (
             <article
               key={block.id}
               className="site-card rounded-3xl border border-white/70 bg-white/90 p-6 shadow-sm"
@@ -132,6 +134,40 @@ export function JudgingPage() {
           ))}
         </div>
       </section>
+
+      {rewardsBlock ? (
+        <section className="rounded-[2rem] border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-100 p-7 text-slate-950 shadow-xl shadow-emerald-950/10 ring-1 ring-emerald-100">
+          <article className="rounded-3xl border border-white/80 bg-white/90 p-6 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">
+              Celebration
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+              {rewardsBlock.title}
+            </h2>
+            <RichTextBody
+              body={rewardsBlock.body}
+              className="mt-4 max-w-3xl space-y-3"
+              paragraphClassName="text-base leading-8 text-slate-700"
+            />
+
+            {isEditing ? (
+              <div className="mt-5 border-t border-slate-200 pt-5">
+                <ContentBlockInlineEditor
+                  title="Edit rewards section"
+                  description="Update the single rewards and celebration block shown on this page."
+                  block={rewardsBlock}
+                  saving={saving}
+                  onSave={saveBlock}
+                  onDelete={removeBlock}
+                  canDelete={false}
+                  deleteLabel="Delete rewards section"
+                  bodyPlaceholder="Explain rewards, recognition, or celebration plans with lists, bold callouts, or supporting links."
+                />
+              </div>
+            ) : null}
+          </article>
+        </section>
+      ) : null}
     </div>
   );
 }

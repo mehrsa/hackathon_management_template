@@ -11,7 +11,7 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 }));
 
 describe('JudgingPage', () => {
-  it('renders linked phrases in the page intro and criteria bodies', () => {
+  it('renders linked phrases in the page intro, criteria bodies, and rewards section', () => {
     useSitePageContextMock.mockReturnValue({
       isEditing: false,
       siteData: {
@@ -27,6 +27,11 @@ describe('JudgingPage', () => {
                 ...block,
                 body: 'Scoring notes live at https://example.com/scoring-notes.',
               }
+            : block.id === '44444444-4444-4444-8444-555555555555'
+              ? {
+                  ...block,
+                  body: 'Winners will be celebrated in the [closing showcase](https://example.com/showcase).',
+                }
             : block
         ),
       },
@@ -45,5 +50,9 @@ describe('JudgingPage', () => {
     expect(
       screen.getByRole('link', { name: 'https://example.com/scoring-notes' })
     ).toHaveAttribute('href', 'https://example.com/scoring-notes');
+    expect(
+      screen.getByRole('link', { name: 'closing showcase' })
+    ).toHaveAttribute('href', 'https://example.com/showcase');
+    expect(screen.getByRole('heading', { name: 'Rewards and celebrating your success' })).toBeVisible();
   });
 });

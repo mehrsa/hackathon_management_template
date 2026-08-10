@@ -1,4 +1,4 @@
-import hackerFishBannerImage from '@/assets/hacker-fish-banner.png';
+import newBannerImage from '@/assets/new_banner_2.png';
 import {
   DEFAULT_ADMIN_EMAIL,
   type AdminEmailRecord,
@@ -24,10 +24,19 @@ const ids = {
   judging2: '44444444-4444-4444-8444-222222222222',
   judging3: '44444444-4444-4444-8444-333333333333',
   judging4: '44444444-4444-4444-8444-444444444444',
+  judgingReward: '44444444-4444-4444-8444-555555555555',
   submit1: '55555555-5555-4555-8555-111111111111',
   submit2: '55555555-5555-4555-8555-222222222222',
   submit3: '55555555-5555-4555-8555-333333333333',
   submit4: '55555555-5555-4555-8555-444444444444',
+  resourcesLibrarySection: '88888888-8888-4888-8888-000000000001',
+  resourcesRecordingsSection: '88888888-8888-4888-8888-000000000002',
+  resourcesUpcomingSection: '88888888-8888-4888-8888-000000000003',
+  resources1: '88888888-8888-4888-8888-111111111111',
+  resources2: '88888888-8888-4888-8888-222222222222',
+  resources3: '88888888-8888-4888-8888-333333333333',
+  resourcesRecording1: '88888888-8888-4888-8888-444444444444',
+  resourcesUpcoming1: '88888888-8888-4888-8888-555555555555',
   timeline1: '66666666-6666-4666-8666-111111111111',
   timeline2: '66666666-6666-4666-8666-222222222222',
   timeline3: '66666666-6666-4666-8666-333333333333',
@@ -41,13 +50,14 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   siteDescription:
     'Design, build, and launch Rayfin-powered experiences with guidance for teams, judges, and submitters in one place.',
   navBuildLabel: 'What you can build',
-  navJudgingLabel: 'Judging criteria',
+  navJudgingLabel: 'Judging Criteria & Rewards',
   navSubmitLabel: 'Submit your project',
+  navProjectsLabel: 'Proposed projects',
   heroBadge: 'July 2026 Hackathon Announcement',
   bannerTitle: 'Build standout apps with Rayfin this July',
   bannerDescription:
     'Bring your best product idea, prototype quickly with Rayfin, and showcase a polished solution to judges and peers during the Rayfin Hackathon.',
-  bannerImageUrl: hackerFishBannerImage,
+  bannerImageUrl: newBannerImage,
   registerUrl: 'https://example.com/rayfin-hackathon-register',
   homeIntroTitle: 'Welcome to Rayfin Hackathon!',
   homeIntroBody:
@@ -57,6 +67,8 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     'Examples and prompts to help teams choose a strong direction.',
   homeExploreJudgingDescription: 'A clear view of how entries will be evaluated.',
   homeExploreSubmitDescription: 'Everything teams need to include in the final handoff.',
+  homeExploreProjectsDescription:
+    'Browse submitted ideas, see who is building them, and find teams to join.',
   homeGoalsTitle: 'Hackathon Goals',
   homeTimelineTitle: 'Hackathon timeline and key milestones',
   buildHeroTitle: 'Choose a problem worth solving and show why your concept matters.',
@@ -68,8 +80,8 @@ export const defaultSiteSettings: SiteSettingsRecord = {
   judgingCriteriaTitle: 'What judges score',
   submitHeroTitle: 'Make your final handoff easy for judges to review and experience.',
   submitChecklistEyebrow: 'Submission checklist',
-  submitChecklistTitle: 'What teams need to hand off',
-  submitReminderTitle: 'Final reminder',
+  submitChecklistTitle: 'What teams need to include',
+  submitDeadline: '',
   buildIntro:
     'Your team can tackle business workflows, AI-assisted experiences, operational tooling, internal portals, or customer-facing apps as long as Rayfin is a meaningful part of the solution.',
   judgingIntro:
@@ -179,40 +191,101 @@ export const defaultBlocks: ContentBlockRecord[] = [
     sortOrder: 4,
   },
   {
+    id: ids.judgingReward,
+    pageKey: 'judging',
+    blockKind: 'reward',
+    title: 'Rewards and celebrating your success',
+    body:
+      'Winning teams can be recognized with prizes, shout-outs, leadership visibility, or showcase opportunities. Use this section to explain what success looks like after judging and how teams will be celebrated.',
+    sortOrder: 5,
+  },
+  {
     id: ids.submit1,
     pageKey: 'submit',
     blockKind: 'submission',
-    title: 'Project summary',
+    title: 'Submission checklist',
     body:
-      'Share the team name, members, problem statement, target audience, and a concise explanation of what you built.',
+      'Include your project summary, primary demo or repository links, setup notes for judges, and the most important product feedback your team filed.',
     sortOrder: 1,
   },
   {
-    id: ids.submit2,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'Demo assets',
-    body:
-      'Include a short demo video or walkthrough plus screenshots that highlight the primary user flow and differentiators.',
+    id: ids.resourcesLibrarySection,
+    pageKey: 'resources',
+    blockKind: 'resourceLibrarySection',
+    title: 'Learning Library',
+    body: 'Docs, guides, repos, and quick references participants can use any time during the hackathon.',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resourcesRecordingsSection,
+    pageKey: 'resources',
+    blockKind: 'resourceRecordingsSection',
+    title: 'Recordings',
+    body: 'Keep replays, walkthroughs, and demos in one place so nobody misses the key sessions.',
     sortOrder: 2,
   },
   {
-    id: ids.submit3,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'Technical details',
-    body:
-      'Provide a repository link, architecture notes, setup instructions, and call out where Rayfin is used in the build.',
+    id: ids.resourcesUpcomingSection,
+    pageKey: 'resources',
+    blockKind: 'resourceUpcomingSessionsSection',
+    title: 'Upcoming sessions',
+    body: 'Share office hours and upcoming sessions here. Add the Teams meeting link to each card so attendees can open it or add it to their calendar.',
     sortOrder: 3,
   },
   {
-    id: ids.submit4,
-    pageKey: 'submit',
-    blockKind: 'submission',
-    title: 'How judges access it',
+    id: ids.resources1,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Rayfin and Fabric documentation',
     body:
-      'Explain exactly how judges can try the app, review the code, and understand any constraints or known limitations.',
-    sortOrder: 4,
+      'Start with the official documentation for Rayfin and Fabric concepts, product guidance, and core references teams can use while planning and building.',
+    ctaLabel: 'Open docs',
+    ctaUrl: 'https://learn.microsoft.com/fabric/',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resources2,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Build ideas and prompts',
+    body:
+      'Share internal starter prompts, prior examples, and your own guidance so teams can pick a direction faster and learn from previous work.',
+    ctaLabel: 'Review build guidance',
+    ctaUrl: '/build',
+    sortOrder: 2,
+  },
+  {
+    id: ids.resources3,
+    pageKey: 'resources',
+    blockKind: 'resource',
+    title: 'Submission prep',
+    body:
+      'Keep the final checklist, judging expectations, and demo packaging notes in one place so participants know exactly how to finish strong.',
+    ctaLabel: 'See submission page',
+    ctaUrl: '/submit',
+    sortOrder: 3,
+  },
+  {
+    id: ids.resourcesRecording1,
+    pageKey: 'resources',
+    blockKind: 'recording',
+    title: 'Kickoff session recording',
+    body:
+      'Post the session replay, demo walkthrough, or recap notes here so late joiners can catch up quickly.',
+    ctaLabel: 'Watch recording',
+    ctaUrl: 'https://example.com/rayfin-kickoff-recording',
+    sortOrder: 1,
+  },
+  {
+    id: ids.resourcesUpcoming1,
+    pageKey: 'resources',
+    blockKind: 'upcomingSession',
+    title: 'Office hours',
+    body:
+      'Share the next live support session, what it will cover, and how participants should prepare before joining.',
+    ctaLabel: 'Add to calendar',
+    ctaUrl: 'https://teams.microsoft.com/l/meetup-join/example',
+    sortOrder: 1,
   },
 ];
 
@@ -275,8 +348,10 @@ export const emptyPersistedState: PersistedSiteState = {
 
 export function getNavigationItems(settings: SiteSettingsRecord) {
   return [
-    { to: '/build', label: settings.navBuildLabel },
     { to: '/judging', label: settings.navJudgingLabel },
+    { to: '/build', label: settings.navBuildLabel },
+    { to: '/resources', label: 'Resources' },
+    { to: '/projects', label: settings.navProjectsLabel },
     { to: '/submit', label: settings.navSubmitLabel },
   ] as const;
 }
@@ -298,7 +373,11 @@ export function canHideDefaultBlock(block: ContentBlockRecord): boolean {
 
   return (
     (block.pageKey === 'build' && block.blockKind === 'idea') ||
-    (block.pageKey === 'submit' && block.blockKind === 'submission')
+    (block.pageKey === 'submit' && block.blockKind === 'submission') ||
+    (block.pageKey === 'resources' &&
+      (block.blockKind === 'resource' ||
+        block.blockKind === 'recording' ||
+        block.blockKind === 'upcomingSession'))
   );
 }
 
@@ -339,7 +418,9 @@ export function mergeDefinedValues<T extends object>(
 }
 
 function isLegacyBannerImageUrl(value: string): boolean {
-  return /(^|[\\/])rayfin(?:-[A-Za-z0-9_-]+)?\.png(?:[?#].*)?$/i.test(value);
+  return /(^|[\\/])(rayfin|hacker-fish-banner|new_banner)(?:-[A-Za-z0-9_-]+)?\.png(?:[?#].*)?$/i.test(
+    value
+  );
 }
 
 function mergeSiteSettings(
