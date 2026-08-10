@@ -18,6 +18,8 @@ export function AdminPortalPage() {
     setEditing,
     addAdminEmail,
     removeAdminEmail,
+    addJudgeEmail,
+    removeJudgeEmail,
   } = useSitePageContext();
   const [deadlineInput, setDeadlineInput] = useState('');
   const [deadlineMessage, setDeadlineMessage] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export function AdminPortalPage() {
         saving={saving}
         currentUserEmail={auth.user?.email ?? null}
         adminEmails={siteData.adminEmails}
+        judgeEmails={siteData.judgeEmails}
         settings={siteData.settings}
         onSetEditing={setEditing}
         onSetPreviewMode={setPreviewMode}
@@ -65,6 +68,14 @@ export function AdminPortalPage() {
           });
         }}
         onRemoveAdmin={removeAdminEmail}
+        onAddJudge={async (email) => {
+          await addJudgeEmail({
+            id: crypto.randomUUID(),
+            email,
+            addedByEmail: auth.user?.email ?? email,
+          });
+        }}
+        onRemoveJudge={removeJudgeEmail}
         onSignOut={auth.signOut}
       />
 

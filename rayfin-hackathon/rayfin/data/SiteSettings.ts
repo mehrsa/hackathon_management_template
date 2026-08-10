@@ -1,5 +1,6 @@
 import {
   authenticated,
+  boolean,
   entity,
   text,
   uuid,
@@ -35,6 +36,7 @@ export class SiteSettings {
   @text({ max: 200, optional: true }) judgingHeroTitle?: string;
   @text({ max: 120, optional: true }) judgingCriteriaEyebrow?: string;
   @text({ max: 160, optional: true }) judgingCriteriaTitle?: string;
+  @boolean({ optional: true }) judgingFormPublished?: boolean;
   @text({ max: 200, optional: true }) submitHeroTitle?: string;
   @text({ max: 120, optional: true }) submitChecklistEyebrow?: string;
   @text({ max: 160, optional: true }) submitChecklistTitle?: string;

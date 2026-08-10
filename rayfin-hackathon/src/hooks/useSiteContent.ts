@@ -11,10 +11,12 @@ import {
 import {
   createAdminEmail,
   createContentBlock,
+  createJudgeEmail,
   createSiteSettings,
   createTimelineMilestone,
   deleteAdminEmail,
   deleteContentBlock,
+  deleteJudgeEmail,
   deleteTimelineMilestone,
   fetchSiteContent,
   updateContentBlock,
@@ -28,6 +30,7 @@ import {
 import type {
   AdminEmailRecord,
   ContentBlockRecord,
+  JudgeEmailRecord,
   PersistedSiteState,
   SiteData,
   SiteSettingsRecord,
@@ -50,7 +53,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
       snapshot.settings,
       snapshot.blocks,
       snapshot.timeline,
-      snapshot.adminEmails
+      snapshot.adminEmails,
+      snapshot.judgeEmails
     );
     setPersisted(snapshot.persisted);
     setSiteData(mergedSiteData);
@@ -200,7 +204,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
               current.settings,
               current.blocks,
               current.timeline.filter((item) => item.id !== milestone.id).concat(milestone),
-              current.adminEmails
+              current.adminEmails,
+              current.judgeEmails
             ).timeline,
           };
           writeSiteDefaultSnapshot(nextSiteData);
@@ -273,7 +278,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
             current.settings,
             current.blocks,
             current.timeline,
-            current.adminEmails.concat(adminEmail)
+            current.adminEmails.concat(adminEmail),
+            current.judgeEmails
           );
           writeSiteDefaultSnapshot(nextSiteData);
           return nextSiteData;
@@ -311,7 +317,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
             current.settings,
             current.blocks,
             current.timeline,
-            current.adminEmails.filter((entry) => entry.id !== id)
+            current.adminEmails.filter((entry) => entry.id !== id),
+            current.judgeEmails
           );
           writeSiteDefaultSnapshot(nextSiteData);
           return nextSiteData;
@@ -324,6 +331,60 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
       }
     },
     [persisted.adminIds]
+  );
+
+  const addJudge = useCallback(
+    async (judgeEmail: JudgeEmailRecord) => {
+      setSaving(true);
+      setError(null);
+
+      try {
+        await createJudgeEmail(judgeEmail);
+        setPersisted((current) => ({
+          ...current,
+          judgeIds: current.judgeIds.concat(judgeEmail.id),
+        }));
+        setSiteData((current) => ({
+          ...current,
+          judgeEmails: current.judgeEmails.concat(judgeEmail).sort((left, right) =>
+            left.email.localeCompare(right.email)
+          ),
+        }));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to add judge email.');
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    []
+  );
+
+  const removeJudge = useCallback(
+    async (id: string) => {
+      setSaving(true);
+      setError(null);
+
+      try {
+        if (persisted.judgeIds.includes(id)) {
+          await deleteJudgeEmail(id);
+        }
+        setPersisted((current) => ({
+          ...current,
+          judgeIds: current.judgeIds.filter((value) => value !== id),
+        }));
+        setSiteData((current) => ({
+          ...current,
+          judgeEmails: current.judgeEmails.filter((entry) => entry.id !== id),
+        }));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to remove judge email.');
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [persisted.judgeIds]
   );
 
   return useMemo(
@@ -341,6 +402,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
       removeTimelineMilestone,
       addAdmin,
       removeAdmin,
+      addJudge,
+      removeJudge,
     }),
     [
       siteData,
@@ -356,6 +419,8 @@ export function useSiteContent({ includeAdminEmails }: UseSiteContentOptions) {
       removeTimelineMilestone,
       addAdmin,
       removeAdmin,
+      addJudge,
+      removeJudge,
     ]
   );
 }

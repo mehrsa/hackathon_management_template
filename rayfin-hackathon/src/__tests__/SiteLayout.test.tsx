@@ -54,6 +54,8 @@ describe('SiteLayout', () => {
       removeTimelineMilestone: vi.fn(),
       addAdmin: vi.fn(),
       removeAdmin: vi.fn(),
+      addJudge: vi.fn(),
+      removeJudge: vi.fn(),
     });
   });
 
@@ -78,6 +80,8 @@ describe('SiteLayout', () => {
       removeTimelineMilestone: vi.fn(),
       addAdmin: vi.fn(),
       removeAdmin: vi.fn(),
+      addJudge: vi.fn(),
+      removeJudge: vi.fn(),
     });
 
     render(
@@ -187,7 +191,60 @@ describe('SiteLayout', () => {
       'Resources',
       defaultSiteData.settings.navProjectsLabel,
       defaultSiteData.settings.navSubmitLabel,
+      'Judge projects',
       'Admin',
     ]);
+  });
+
+  it('shows the judge workspace only to judges and admins', () => {
+    render(
+      <MemoryRouter initialEntries={['/build']}>
+        <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route path="build" element={<div>Build page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('link', { name: 'Judge projects' })).not.toBeInTheDocument();
+
+    cleanup();
+    useSiteContentMock.mockReturnValue({
+      siteData: {
+        ...defaultSiteData,
+        judgeEmails: [
+          {
+            id: 'judge-email-1',
+            email: 'member@example.com',
+            addedByEmail: defaultSiteData.adminEmails[0].email,
+          },
+        ],
+      },
+      loading: false,
+      saving: false,
+      error: null,
+      saveSettings: vi.fn(),
+      saveBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      saveTimelineMilestone: vi.fn(),
+      removeTimelineMilestone: vi.fn(),
+      addAdmin: vi.fn(),
+      removeAdmin: vi.fn(),
+      addJudge: vi.fn(),
+      removeJudge: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/judge']}>
+        <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route path="judge" element={<div>Judge page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Judge projects' })).toHaveAttribute('href', '/judge');
   });
 });

@@ -22,6 +22,7 @@ function createMockClient() {
   const contentBlocksExecute = vi.fn().mockResolvedValue([]);
   const timelineExecute = vi.fn().mockResolvedValue([]);
   const adminExecute = vi.fn().mockResolvedValue([]);
+  const judgeExecute = vi.fn().mockResolvedValue([]);
 
   return {
     client: {
@@ -51,6 +52,13 @@ function createMockClient() {
           select: vi.fn(() => ({
             execute: adminExecute,
           })),
+        },
+        JudgeEmail: {
+          select: vi.fn(() => ({
+            execute: judgeExecute,
+          })),
+          create: vi.fn(),
+          delete: vi.fn(),
         },
       },
     },

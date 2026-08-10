@@ -102,4 +102,10 @@
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
     filter: saturate(1.02);
   }
+
+  .site-card,
+  .glass-panel {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }

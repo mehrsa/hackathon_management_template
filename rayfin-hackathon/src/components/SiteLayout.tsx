@@ -6,13 +6,14 @@ import {
   useLocation,
 } from 'react-router-dom';
 
-import { getNavigationItems, isAdminEmail } from '@/content/defaultContent';
+import { getNavigationItems, isAdminEmail, isJudgeEmail } from '@/content/defaultContent';
 import { useAuth } from '@/hooks/AuthContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import type { AuthContextValue } from '@/hooks/AuthContext';
 import type {
   AdminEmailRecord,
   ContentBlockRecord,
+  JudgeEmailRecord,
   SiteData,
   SiteSettingsRecord,
   TimelineMilestoneRecord,
@@ -21,6 +22,7 @@ import type {
 export interface SitePageContextValue {
   auth: AuthContextValue;
   isAdmin: boolean;
+  isJudge: boolean;
   isPreviewMode: boolean;
   canManageContent: boolean;
   isEditing: boolean;
@@ -36,6 +38,8 @@ export interface SitePageContextValue {
   removeTimelineMilestone: (id: string) => Promise<void>;
   addAdminEmail: (entry: AdminEmailRecord) => Promise<void>;
   removeAdminEmail: (id: string) => Promise<void>;
+  addJudgeEmail: (entry: JudgeEmailRecord) => Promise<void>;
+  removeJudgeEmail: (id: string) => Promise<void>;
 }
 
 const homeIcon = (
@@ -71,6 +75,8 @@ export function SiteLayout() {
     removeTimelineMilestone,
     addAdmin,
     removeAdmin,
+    addJudge,
+    removeJudge,
   } = useSiteContent({ includeAdminEmails: true });
 
   const isAdmin = useMemo(
@@ -78,20 +84,27 @@ export function SiteLayout() {
     [auth.user?.email, siteData.adminEmails]
   );
   const canManageContent = isAdmin && !isPreviewMode;
+  const isJudge = useMemo(
+    () => isAdmin || isJudgeEmail(auth.user?.email, siteData.judgeEmails),
+    [auth.user?.email, isAdmin, siteData.judgeEmails]
+  );
   const isEditing = canManageContent && editingEnabled;
   const navigationItems = useMemo(
     () => [
       { to: '/register', label: 'Registration Portal' },
       ...getNavigationItems(siteData.settings),
+      ...(isJudge ? [{ to: '/judge', label: 'Judge projects' }] : []),
       ...(isAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
     ],
-    [isAdmin, siteData.settings]
+    [isAdmin, isJudge, siteData.settings]
   );
   const currentPageLabel =
     location.pathname === '/admin'
       ? 'Admin portal'
       : location.pathname === '/admin/submissions'
         ? 'Admin submission review'
+      : location.pathname === '/judge'
+        ? 'Judge projects'
       : location.pathname === '/register'
         ? 'Registration Portal'
       : location.pathname === '/'
@@ -132,6 +145,7 @@ export function SiteLayout() {
     () => ({
       auth,
       isAdmin,
+      isJudge,
       isPreviewMode,
       canManageContent,
       isEditing,
@@ -168,10 +182,19 @@ export function SiteLayout() {
         requireAdminAccess();
         await removeAdmin(id);
       },
+      addJudgeEmail: async (entry) => {
+        requireAdminAccess();
+        await addJudge(entry);
+      },
+      removeJudgeEmail: async (id) => {
+        requireAdminAccess();
+        await removeJudge(id);
+      },
     }),
     [
       auth,
       isAdmin,
+      isJudge,
       isPreviewMode,
       canManageContent,
       isEditing,
@@ -188,6 +211,8 @@ export function SiteLayout() {
       removeTimelineMilestone,
       addAdmin,
       removeAdmin,
+      addJudge,
+      removeJudge,
     ]
   );
 

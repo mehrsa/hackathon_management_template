@@ -60,6 +60,7 @@ describe('useSiteContent', () => {
         blocks: [],
         timeline: [],
         adminEmails: [],
+        judgeEmails: [],
         persisted: emptyPersistedState,
       })
       .mockResolvedValueOnce({
@@ -67,6 +68,7 @@ describe('useSiteContent', () => {
         blocks: [],
         timeline: [],
         adminEmails: [],
+        judgeEmails: [],
         persisted: {
           ...emptyPersistedState,
           hasSettings: true,
@@ -113,6 +115,7 @@ describe('useSiteContent', () => {
         blocks: [],
         timeline: [],
         adminEmails: [],
+        judgeEmails: [],
         persisted: emptyPersistedState,
       })
       .mockResolvedValueOnce({
@@ -120,6 +123,7 @@ describe('useSiteContent', () => {
         blocks: [newBlock],
         timeline: [],
         adminEmails: [],
+        judgeEmails: [],
         persisted: {
           ...emptyPersistedState,
           blockIds: [newBlock.id],

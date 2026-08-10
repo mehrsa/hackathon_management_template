@@ -1,6 +1,9 @@
 import type { SiteSettingsRecord } from '@/types/site';
 
-export const SITE_SETTINGS_LIMITS: Record<Exclude<keyof SiteSettingsRecord, 'id'>, number> = {
+export const SITE_SETTINGS_LIMITS: Record<
+  Exclude<keyof SiteSettingsRecord, 'id' | 'judgingFormPublished'>,
+  number
+> = {
   siteTitle: 120,
   siteDescription: 300,
   navBuildLabel: 120,
