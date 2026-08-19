@@ -7,13 +7,16 @@ import {
 } from '@microsoft/rayfin-core';
 
 @entity()
-@authenticated(['create', 'read', 'update', 'delete'], {
+@authenticated('read')
+@authenticated('update')
+@authenticated(['create', 'delete'], {
   policy: (claims, item) => claims.sub.eq(item.judgeUserId),
 })
 export class JudgingEntry {
   @uuid() id!: string;
   @uuid() submissionId!: string;
   @text({ max: 200 }) judgeUserId!: string;
+  @text({ max: 200, optional: true }) judgeName?: string;
   @text({ max: 200 }) judgeEmail!: string;
   @text({ max: 4000 }) scoresJson!: string;
   @text({ max: 4000, optional: true }) notes?: string;

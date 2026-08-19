@@ -7,6 +7,8 @@ export interface JudgeAssignmentRecord {
   submissionId: string;
   slot: number;
   judgeUserId: string;
+  judgeName?: string;
+  judgeEmail?: string;
   createdAt: string;
 }
 
@@ -20,6 +22,8 @@ export function createJudgeAssignment(
     submissionId,
     slot,
     judgeUserId: judge.id,
+    judgeName: judge.name,
+    judgeEmail: judge.email,
     createdAt: new Date().toISOString(),
   };
 }

@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom';
 
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { fetchFinalProjectSubmissions } from '@/services/finalProjectSubmissions';
+import { fetchAllJudgingEntries } from '@/services/judgingEntries';
 import { splitMultilineValues, type FinalProjectSubmissionRecord } from '@/types/finalProjectSubmission';
+import {
+  getLatestJudgingEntriesByJudge,
+  type JudgingEntryRecord,
+} from '@/types/judging';
 import { formatDeadlineForDisplay } from '@/utils/submissionDeadline';
 
 const urlPattern = /https?:\/\/\S+/i;
@@ -57,12 +62,14 @@ export function AdminSubmissionsPage() {
   const { auth, isAdmin, siteData } = useSitePageContext();
   const [search, setSearch] = useState('');
   const [submissions, setSubmissions] = useState<FinalProjectSubmissionRecord[]>([]);
+  const [judgingEntries, setJudgingEntries] = useState<JudgingEntryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAdmin) {
       setSubmissions([]);
+      setJudgingEntries([]);
       setLoading(false);
       setError(null);
       return;
@@ -73,10 +80,11 @@ export function AdminSubmissionsPage() {
     setLoading(true);
     setError(null);
 
-    fetchFinalProjectSubmissions()
-      .then((rows) => {
+    Promise.all([fetchFinalProjectSubmissions(), fetchAllJudgingEntries()])
+      .then(([submissionRows, entryRows]) => {
         if (!cancelled) {
-          setSubmissions(rows);
+          setSubmissions(submissionRows);
+          setJudgingEntries(entryRows);
         }
       })
       .catch((err) => {
@@ -104,6 +112,22 @@ export function AdminSubmissionsPage() {
 
     return submissions.filter((submission) => matchesSearch(submission, normalized));
   }, [search, submissions]);
+  const starredEntriesBySubmission = useMemo(() => {
+    const entriesBySubmission = new Map<string, JudgingEntryRecord[]>();
+
+    for (const entry of judgingEntries) {
+      const projectEntries = entriesBySubmission.get(entry.submissionId) ?? [];
+      projectEntries.push(entry);
+      entriesBySubmission.set(entry.submissionId, projectEntries);
+    }
+
+    return new Map(
+      [...entriesBySubmission].map(([submissionId, entries]) => [
+        submissionId,
+        getLatestJudgingEntriesByJudge(entries).filter((entry) => entry.starred),
+      ])
+    );
+  }, [judgingEntries]);
 
   const deadlineLabel = formatDeadlineForDisplay(siteData.settings.submitDeadline);
 
@@ -204,6 +228,7 @@ export function AdminSubmissionsPage() {
             const assetLinks = splitMultilineValues(submission.assetLinks);
             const feedbackNotes = splitMultilineValues(submission.feedbackNotes);
             const teamMembers = splitTeamMembers(submission.teamMembers);
+            const starredEntries = starredEntriesBySubmission.get(submission.id) ?? [];
 
             return (
               <article
@@ -212,6 +237,18 @@ export function AdminSubmissionsPage() {
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">{submission.teamName}</h2>
+                  {starredEntries.length > 0 ? (
+                    <span
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800"
+                      title={starredEntries
+                        .map((entry) => entry.judgeName || entry.judgeEmail || 'Unknown judge')
+                        .join(', ')}
+                    >
+                      <span aria-hidden="true">★</span>{' '}
+                      Starred by {starredEntries.length} judge
+                      {starredEntries.length === 1 ? '' : 's'}
+                    </span>
+                  ) : null}
                   {submission.ownerUserId === auth.user?.id ? (
                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                       Your team

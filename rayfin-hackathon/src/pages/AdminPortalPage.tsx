@@ -80,7 +80,7 @@ export function AdminPortalPage() {
       />
 
       {isAdmin ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+        <section className="grid gap-6 xl:grid-cols-3">
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
               Submission window
@@ -133,6 +133,23 @@ export function AdminPortalPage() {
             )}
             {deadlineMessage ? <p className="mt-3 text-sm text-emerald-700">{deadlineMessage}</p> : null}
             {deadlineError ? <p className="mt-3 text-sm text-rose-700">{deadlineError}</p> : null}
+          </article>
+
+          <article className="rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 text-emerald-950 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+              Judging report
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Track progress and score trends</h2>
+            <p className="mt-3 text-sm leading-7 text-emerald-900/85">
+              See top projects, judging completion, score trends, and the teams that still need
+              judges or completed scorecards.
+            </p>
+            <Link
+              to="/admin/report"
+              className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+            >
+              Open judging report
+            </Link>
           </article>
 
           <article className="rounded-3xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 text-blue-950 shadow-sm">

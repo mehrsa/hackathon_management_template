@@ -176,7 +176,8 @@ describe('JudgingPage', () => {
         teamMembers: 'Builder Example',
         projectSummary: 'A polished incident response assistant.',
         assetLinks: 'https://example.com/demo',
-        feedbackNotes: '',
+        feedbackNotes:
+          'The issue workflow needs clearer validation.\nhttps://github.com/example/project/issues/42',
         createdAt: '2026-08-01T10:00:00.000Z',
         updatedAt: '2026-08-01T11:00:00.000Z',
       },
@@ -222,6 +223,13 @@ describe('JudgingPage', () => {
       'target',
       '_blank'
     );
+    expect(
+      screen.getByRole('heading', { name: 'Product feedback and issues' })
+    ).toBeVisible();
+    expect(screen.getByText('The issue workflow needs clearer validation.')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: 'https://github.com/example/project/issues/42' })
+    ).toHaveAttribute('target', '_blank');
     await user.click(screen.getByRole('button', { name: 'Assign to me' }));
 
     const criterionInfo = screen.getByRole('button', { name: 'About Problem value' });

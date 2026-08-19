@@ -5,6 +5,7 @@ import { RequireAuth } from '@/components/RequireAuth';
 import { SiteLayout } from '@/components/SiteLayout';
 import { useAuth } from '@/hooks/AuthContext';
 import { AdminPortalPage } from '@/pages/AdminPortalPage';
+import { AdminReportPage } from '@/pages/AdminReportPage';
 import { AdminSubmissionsPage } from '@/pages/AdminSubmissionsPage';
 import { BuildPage } from '@/pages/BuildPage';
 import { HomePage } from '@/pages/HomePage';
@@ -26,6 +27,7 @@ function App() {
           <Route path="/" element={<SiteLayout />}>
             <Route index element={<HomePage />} />
             <Route path="admin" element={<AdminPortalPage />} />
+            <Route path="admin/report" element={<AdminReportPage />} />
             <Route path="admin/submissions" element={<AdminSubmissionsPage />} />
             <Route path="build" element={<BuildPage />} />
             <Route path="judging" element={<JudgingCriteriaPage />} />

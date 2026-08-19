@@ -11,6 +11,8 @@ const judgeAssignmentFields = [
   'submissionId',
   'slot',
   'judgeUserId',
+  'judgeName',
+  'judgeEmail',
   'createdAt',
 ] as const;
 
@@ -22,6 +24,8 @@ function normalizeAssignment(
     submissionId: typeof row.submissionId === 'string' ? row.submissionId : '',
     slot: typeof row.slot === 'number' ? row.slot : 0,
     judgeUserId: typeof row.judgeUserId === 'string' ? row.judgeUserId : '',
+    judgeName: typeof row.judgeName === 'string' ? row.judgeName : '',
+    judgeEmail: typeof row.judgeEmail === 'string' ? row.judgeEmail : '',
     createdAt: typeof row.createdAt === 'string' ? row.createdAt : '',
   };
 }

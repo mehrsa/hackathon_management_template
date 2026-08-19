@@ -506,6 +506,18 @@ export function JudgingPage() {
                             />
                           </div>
                         ) : null}
+                        {submission.feedbackNotes ? (
+                          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                            <h4 className="text-sm font-semibold text-blue-950">
+                              Product feedback and issues
+                            </h4>
+                            <RichTextBody
+                              body={submission.feedbackNotes}
+                              className="mt-2 space-y-2 break-words"
+                              paragraphClassName="text-sm leading-6 text-blue-900"
+                            />
+                          </div>
+                        ) : null}
                         <div className="mt-5 rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
                           <p className="text-sm font-semibold text-indigo-950">
                             {projectAssignments.length} / {MAX_JUDGES_PER_PROJECT} judges assigned

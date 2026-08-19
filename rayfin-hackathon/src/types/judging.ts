@@ -5,6 +5,7 @@ export interface JudgingEntryRecord {
   id: string;
   submissionId: string;
   judgeUserId: string;
+  judgeName?: string;
   judgeEmail: string;
   scores: Record<string, number>;
   notes: string;
@@ -13,9 +14,26 @@ export interface JudgingEntryRecord {
   updatedAt: string;
 }
 
+export function getLatestJudgingEntriesByJudge(
+  entries: JudgingEntryRecord[]
+): JudgingEntryRecord[] {
+  const latestByJudge = new Map<string, JudgingEntryRecord>();
+
+  for (const entry of entries) {
+    const key = entry.judgeUserId || entry.judgeEmail || entry.id;
+    const current = latestByJudge.get(key);
+
+    if (!current || current.updatedAt.localeCompare(entry.updatedAt) < 0) {
+      latestByJudge.set(key, entry);
+    }
+  }
+
+  return [...latestByJudge.values()];
+}
+
 export function createEmptyJudgingEntry(
   submissionId: string,
-  judge: { id: string; email: string }
+  judge: { id: string; email: string; name: string }
 ): JudgingEntryRecord {
   const now = new Date().toISOString();
 
@@ -23,6 +41,7 @@ export function createEmptyJudgingEntry(
     id: crypto.randomUUID(),
     submissionId,
     judgeUserId: judge.id,
+    judgeName: judge.name,
     judgeEmail: judge.email,
     scores: {},
     notes: '',

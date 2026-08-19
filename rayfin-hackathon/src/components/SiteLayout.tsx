@@ -101,6 +101,8 @@ export function SiteLayout() {
   const currentPageLabel =
     location.pathname === '/admin'
       ? 'Admin portal'
+      : location.pathname === '/admin/report'
+        ? 'Admin judging report'
       : location.pathname === '/admin/submissions'
         ? 'Admin submission review'
       : location.pathname === '/judge'

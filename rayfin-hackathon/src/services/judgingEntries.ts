@@ -9,6 +9,7 @@ const judgingEntryFields = [
   'id',
   'submissionId',
   'judgeUserId',
+  'judgeName',
   'judgeEmail',
   'scoresJson',
   'notes',
@@ -21,6 +22,7 @@ interface JudgingEntryRow {
   id?: string | null;
   submissionId?: string | null;
   judgeUserId?: string | null;
+  judgeName?: string | null;
   judgeEmail?: string | null;
   scoresJson?: string | null;
   notes?: string | null;
@@ -66,6 +68,7 @@ function normalizeJudgingEntry(row: JudgingEntryRow): JudgingEntryRecord {
     id: normalizeText(row.id),
     submissionId: normalizeText(row.submissionId),
     judgeUserId: normalizeText(row.judgeUserId),
+    judgeName: normalizeText(row.judgeName),
     judgeEmail: normalizeText(row.judgeEmail),
     scores: parseScores(row.scoresJson),
     notes: normalizeText(row.notes),
@@ -80,6 +83,7 @@ function toPayload(entry: JudgingEntryRecord) {
     id: entry.id,
     submissionId: entry.submissionId,
     judgeUserId: entry.judgeUserId,
+    judgeName: entry.judgeName || undefined,
     judgeEmail: entry.judgeEmail,
     scoresJson: JSON.stringify(entry.scores),
     notes: entry.notes || undefined,
@@ -93,6 +97,15 @@ export async function fetchMyJudgingEntries(judgeUserId: string): Promise<Judgin
   const client = getRayfinClient();
   const rows = await client.data.JudgingEntry.select(judgingEntryFields)
     .where({ judgeUserId: { eq: judgeUserId } })
+    .orderBy({ updatedAt: 'desc' })
+    .execute();
+
+  return rows.map((row) => normalizeJudgingEntry(row));
+}
+
+export async function fetchAllJudgingEntries(): Promise<JudgingEntryRecord[]> {
+  const client = getRayfinClient();
+  const rows = await client.data.JudgingEntry.select(judgingEntryFields)
     .orderBy({ updatedAt: 'desc' })
     .execute();
 
