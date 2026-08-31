@@ -42,6 +42,11 @@ export interface SiteSettingsRecord {
   judgingHeroTitle: string;
   judgingCriteriaEyebrow: string;
   judgingCriteriaTitle: string;
+  judgingFormPublished: boolean;
+  registrationOpen: boolean;
+  submissionOpen: boolean;
+  resultsPublished: boolean;
+  honorableMentionSubmissionIds: string;
   submitHeroTitle: string;
   submitChecklistEyebrow: string;
   submitChecklistTitle: string;
@@ -78,11 +83,18 @@ export interface AdminEmailRecord {
   addedByEmail: string;
 }
 
+export interface JudgeEmailRecord {
+  id: string;
+  email: string;
+  addedByEmail: string;
+}
+
 export interface SiteData {
   settings: SiteSettingsRecord;
   blocks: ContentBlockRecord[];
   timeline: TimelineMilestoneRecord[];
   adminEmails: AdminEmailRecord[];
+  judgeEmails: JudgeEmailRecord[];
 }
 
 export interface PersistedSiteState {
@@ -90,6 +102,7 @@ export interface PersistedSiteState {
   blockIds: string[];
   timelineIds: string[];
   adminIds: string[];
+  judgeIds: string[];
 }
 
 export function normalizeEmail(email: string): string {

@@ -18,10 +18,14 @@ export function AdminPortalPage() {
     setEditing,
     addAdminEmail,
     removeAdminEmail,
+    addJudgeEmail,
+    removeJudgeEmail,
   } = useSitePageContext();
   const [deadlineInput, setDeadlineInput] = useState('');
   const [deadlineMessage, setDeadlineMessage] = useState<string | null>(null);
   const [deadlineError, setDeadlineError] = useState<string | null>(null);
+  const [controlMessage, setControlMessage] = useState<string | null>(null);
+  const [controlError, setControlError] = useState<string | null>(null);
 
   useEffect(() => {
     setDeadlineInput(formatDeadlineForInput(siteData.settings.submitDeadline));
@@ -45,6 +49,33 @@ export function AdminPortalPage() {
     }
   }
 
+  async function handleToggle(
+    key: 'registrationOpen' | 'submissionOpen' | 'resultsPublished',
+    label: string
+  ) {
+    setControlMessage(null);
+    setControlError(null);
+
+    try {
+      const nextValue = !siteData.settings[key];
+      await saveSettings({
+        ...siteData.settings,
+        [key]: nextValue,
+      });
+      const stateLabel =
+        key === 'resultsPublished'
+          ? nextValue
+            ? 'published'
+            : 'unpublished'
+          : nextValue
+            ? 'opened'
+            : 'closed';
+      setControlMessage(`${label} ${stateLabel}.`);
+    } catch (err) {
+      setControlError(err instanceof Error ? err.message : `Unable to update ${label}.`);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminControls
@@ -54,6 +85,7 @@ export function AdminPortalPage() {
         saving={saving}
         currentUserEmail={auth.user?.email ?? null}
         adminEmails={siteData.adminEmails}
+        judgeEmails={siteData.judgeEmails}
         settings={siteData.settings}
         onSetEditing={setEditing}
         onSetPreviewMode={setPreviewMode}
@@ -65,11 +97,75 @@ export function AdminPortalPage() {
           });
         }}
         onRemoveAdmin={removeAdminEmail}
+        onAddJudge={async (email) => {
+          await addJudgeEmail({
+            id: crypto.randomUUID(),
+            email,
+            addedByEmail: auth.user?.email ?? email,
+          });
+        }}
+        onRemoveJudge={removeJudgeEmail}
         onSignOut={auth.signOut}
       />
 
       {isAdmin ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+        <section className="grid gap-6 xl:grid-cols-3">
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm xl:col-span-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-700">
+              Event controls
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+              Open or close participant workflows
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Closed workflows become read-only immediately. Publish results only after winners and
+              honorable mentions are finalized.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {(
+                [
+                  ['registrationOpen', 'Registration'],
+                  ['submissionOpen', 'Submissions'],
+                  ['resultsPublished', 'Results'],
+                ] as const
+              ).map(([key, label]) => {
+                const isOpen = siteData.settings[key];
+                return (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-950">{label}</p>
+                      <p className={`mt-1 text-xs font-medium ${isOpen ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {isOpen ? (key === 'resultsPublished' ? 'Published' : 'Open') : (key === 'resultsPublished' ? 'Hidden' : 'Closed')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      aria-pressed={isOpen}
+                      onClick={() => void handleToggle(key, label)}
+                      disabled={saving}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        isOpen ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
+                    >
+                      {isOpen
+                        ? key === 'resultsPublished'
+                          ? 'Unpublish'
+                          : 'Close'
+                        : key === 'resultsPublished'
+                          ? 'Publish'
+                          : 'Open'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {controlMessage ? <p className="mt-4 text-sm text-emerald-700">{controlMessage}</p> : null}
+            {controlError ? <p className="mt-4 text-sm text-rose-700">{controlError}</p> : null}
+          </article>
+
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
               Submission window
@@ -122,6 +218,23 @@ export function AdminPortalPage() {
             )}
             {deadlineMessage ? <p className="mt-3 text-sm text-emerald-700">{deadlineMessage}</p> : null}
             {deadlineError ? <p className="mt-3 text-sm text-rose-700">{deadlineError}</p> : null}
+          </article>
+
+          <article className="rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 text-emerald-950 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+              Judging report
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Track progress and score trends</h2>
+            <p className="mt-3 text-sm leading-7 text-emerald-900/85">
+              See top projects, judging completion, score trends, and the teams that still need
+              judges or completed scorecards.
+            </p>
+            <Link
+              to="/admin/report"
+              className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+            >
+              Open judging report
+            </Link>
           </article>
 
           <article className="rounded-3xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 text-blue-950 shadow-sm">

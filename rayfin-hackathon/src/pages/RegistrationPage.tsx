@@ -91,8 +91,11 @@ export function RegistrationPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const deadlineLabel = formatDeadlineForDisplay(siteData.settings.submitDeadline);
-  const submissionClosed = isSubmissionClosed(siteData.settings.submitDeadline);
-  const registrationClosedMessage = deadlineLabel
+  const registrationClosed =
+    !siteData.settings.registrationOpen ||
+    isSubmissionClosed(siteData.settings.submitDeadline);
+  const registrationClosedMessage =
+    siteData.settings.registrationOpen && deadlineLabel
     ? `Registration closed on ${deadlineLabel}.`
     : 'Registration is currently closed.';
 
@@ -162,7 +165,7 @@ export function RegistrationPage() {
       return;
     }
 
-    if (submissionClosed) {
+    if (registrationClosed) {
       setError(registrationClosedMessage);
       setSaveMessage(null);
       return;
@@ -213,7 +216,7 @@ export function RegistrationPage() {
       return;
     }
 
-    if (submissionClosed) {
+    if (registrationClosed) {
       setError(registrationClosedMessage);
       setSaveMessage(null);
       return;
@@ -289,17 +292,17 @@ export function RegistrationPage() {
             </p>
           </div>
 
-          {deadlineLabel ? (
+          {deadlineLabel || !siteData.settings.registrationOpen ? (
             <div
               className={[
                 'mt-5 rounded-2xl px-4 py-3 text-sm',
-                submissionClosed
+                registrationClosed
                   ? 'border border-rose-200 bg-rose-50 text-rose-800'
                   : 'border border-blue-200 bg-blue-50 text-blue-900',
               ].join(' ')}
             >
-              {submissionClosed
-                ? `Registration closed on ${deadlineLabel}.`
+              {registrationClosed
+                ? registrationClosedMessage
                 : `Registration updates and unregistering stay open until ${deadlineLabel}.`}
             </div>
           ) : null}
@@ -323,10 +326,10 @@ export function RegistrationPage() {
           ) : (
             <form className="mt-6 space-y-6" onSubmit={(event) => void handleSubmit(event)}>
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                {submissionClosed ? (
+                {registrationClosed ? (
                   <>
                     <span className="font-semibold">Read-only:</span> registrations can no longer be
-                    changed or withdrawn after the submission deadline.
+                    changed or withdrawn while registration is closed.
                   </>
                 ) : (
                   <>
@@ -356,6 +359,7 @@ export function RegistrationPage() {
                          value={value}
                          onChange={handleChange}
                          required={true}
+                         disabled={registrationClosed}
                          maxLength={field.maxLength}
                          rows={4}
                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
@@ -370,6 +374,7 @@ export function RegistrationPage() {
                          value={value}
                          onChange={handleChange}
                          required={true}
+                         disabled={registrationClosed}
                          maxLength={field.maxLength}
                          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                        />
@@ -383,7 +388,7 @@ export function RegistrationPage() {
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={savingSubmission || deletingSubmission || submissionClosed}
+                  disabled={savingSubmission || deletingSubmission || registrationClosed}
                   className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/15 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {savingSubmission
@@ -396,7 +401,7 @@ export function RegistrationPage() {
                   <button
                     type="button"
                     onClick={() => void handleUnregister()}
-                    disabled={savingSubmission || deletingSubmission || submissionClosed}
+                    disabled={savingSubmission || deletingSubmission || registrationClosed}
                     className="inline-flex items-center justify-center rounded-full border border-rose-300 px-6 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {deletingSubmission ? 'Removing...' : 'Unregister'}

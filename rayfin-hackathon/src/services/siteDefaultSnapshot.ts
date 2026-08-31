@@ -23,7 +23,8 @@ export function readSiteDefaultSnapshot(): SiteData | null {
       parsedSnapshot.settings ?? null,
       parsedSnapshot.blocks ?? [],
       parsedSnapshot.timeline ?? [],
-      parsedSnapshot.adminEmails ?? []
+      parsedSnapshot.adminEmails ?? [],
+      parsedSnapshot.judgeEmails ?? []
     );
   } catch {
     window.localStorage.removeItem(siteDefaultSnapshotStorageKey);

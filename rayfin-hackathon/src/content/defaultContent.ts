@@ -3,6 +3,7 @@ import {
   DEFAULT_ADMIN_EMAIL,
   type AdminEmailRecord,
   type ContentBlockRecord,
+  type JudgeEmailRecord,
   type PageKey,
   type PersistedSiteState,
   type SiteData,
@@ -78,6 +79,11 @@ export const defaultSiteSettings: SiteSettingsRecord = {
     'Help judges see the quality, value, and thoughtfulness behind your work.',
   judgingCriteriaEyebrow: 'Criteria',
   judgingCriteriaTitle: 'What judges score',
+  judgingFormPublished: false,
+  registrationOpen: true,
+  submissionOpen: true,
+  resultsPublished: false,
+  honorableMentionSubmissionIds: '',
   submitHeroTitle: 'Make your final handoff easy for judges to review and experience.',
   submitChecklistEyebrow: 'Submission checklist',
   submitChecklistTitle: 'What teams need to include',
@@ -337,6 +343,7 @@ export const defaultSiteData: SiteData = {
   blocks: defaultBlocks,
   timeline: defaultTimeline,
   adminEmails: defaultAdminEmails,
+  judgeEmails: [] as JudgeEmailRecord[],
 };
 
 export const emptyPersistedState: PersistedSiteState = {
@@ -344,6 +351,7 @@ export const emptyPersistedState: PersistedSiteState = {
   blockIds: [],
   timelineIds: [],
   adminIds: [],
+  judgeIds: [],
 };
 
 export function getNavigationItems(settings: SiteSettingsRecord) {
@@ -373,6 +381,7 @@ export function canHideDefaultBlock(block: ContentBlockRecord): boolean {
 
   return (
     (block.pageKey === 'build' && block.blockKind === 'idea') ||
+    (block.pageKey === 'judging' && block.blockKind === 'criterion') ||
     (block.pageKey === 'submit' && block.blockKind === 'submission') ||
     (block.pageKey === 'resources' &&
       (block.blockKind === 'resource' ||
@@ -393,6 +402,15 @@ export function isAdminEmail(email: string | null | undefined, adminEmails: Admi
   if (!email) return false;
   const normalized = normalizeEmail(email);
   return adminEmails.some((entry) => normalizeEmail(entry.email) === normalized);
+}
+
+export function isJudgeEmail(
+  email: string | null | undefined,
+  judgeEmails: JudgeEmailRecord[]
+) {
+  if (!email) return false;
+  const normalized = normalizeEmail(email);
+  return judgeEmails.some((entry) => normalizeEmail(entry.email) === normalized);
 }
 
 export function mergeDefinedValues<T extends object>(
@@ -482,11 +500,16 @@ export function mergeSiteData(
   settings: SiteSettingsRecord | null,
   blocks: ContentBlockRecord[],
   timeline: TimelineMilestoneRecord[],
-  adminEmails: AdminEmailRecord[]
+  adminEmails: AdminEmailRecord[],
+  judgeEmails: JudgeEmailRecord[] = []
 ): SiteData {
   const mergedAdmins = new Map<string, AdminEmailRecord>();
   for (const entry of [...defaultAdminEmails, ...adminEmails]) {
     mergedAdmins.set(normalizeEmail(entry.email), entry);
+  }
+  const mergedJudges = new Map<string, JudgeEmailRecord>();
+  for (const entry of judgeEmails) {
+    mergedJudges.set(normalizeEmail(entry.email), entry);
   }
 
   return {
@@ -494,6 +517,9 @@ export function mergeSiteData(
     blocks: mergeBlocks(defaultBlocks, blocks),
     timeline: mergeCollection(defaultTimeline, timeline),
     adminEmails: Array.from(mergedAdmins.values()).sort((left, right) =>
+      left.email.localeCompare(right.email)
+    ),
+    judgeEmails: Array.from(mergedJudges.values()).sort((left, right) =>
       left.email.localeCompare(right.email)
     ),
   };

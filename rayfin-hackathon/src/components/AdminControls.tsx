@@ -8,6 +8,7 @@ import {
   DEFAULT_ADMIN_EMAIL,
   normalizeEmail,
   type AdminEmailRecord,
+  type JudgeEmailRecord,
   type SiteSettingsRecord,
 } from '@/types/site';
 
@@ -18,11 +19,14 @@ export function AdminControls({
   saving,
   currentUserEmail,
   adminEmails,
+  judgeEmails,
   settings,
   onSetEditing,
   onSetPreviewMode,
   onAddAdmin,
   onRemoveAdmin,
+  onAddJudge,
+  onRemoveJudge,
   onSignOut,
 }: {
   isAdmin: boolean;
@@ -31,16 +35,22 @@ export function AdminControls({
   saving: boolean;
   currentUserEmail: string | null;
   adminEmails: AdminEmailRecord[];
+  judgeEmails: JudgeEmailRecord[];
   settings: SiteSettingsRecord;
   onSetEditing: (value: boolean) => void;
   onSetPreviewMode: (value: boolean) => void;
   onAddAdmin: (email: string) => Promise<void>;
   onRemoveAdmin: (id: string) => Promise<void>;
+  onAddJudge: (email: string) => Promise<void>;
+  onRemoveJudge: (id: string) => Promise<void>;
   onSignOut: () => Promise<void>;
 }) {
   const [inviteEmail, setInviteEmail] = useState('');
+  const [judgeEmail, setJudgeEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [judgeMessage, setJudgeMessage] = useState<string | null>(null);
+  const [judgeError, setJudgeError] = useState<string | null>(null);
 
   const adminEmailsByNormalizedAddress = useMemo(
     () => new Set(adminEmails.map((entry) => normalizeEmail(entry.email))),
@@ -49,6 +59,10 @@ export function AdminControls({
   const editablePages = useMemo(
     () => [{ to: '/', label: 'Announcement' }, ...getNavigationItems(settings)],
     [settings]
+  );
+  const judgeEmailsByNormalizedAddress = useMemo(
+    () => new Set(judgeEmails.map((entry) => normalizeEmail(entry.email))),
+    [judgeEmails]
   );
 
   const handleAddAdmin = async () => {
@@ -84,6 +98,46 @@ export function AdminControls({
       setMessage('Admin email removed.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to remove admin email.');
+    }
+  };
+
+  const handleAddJudge = async () => {
+    const normalized = normalizeEmail(judgeEmail);
+    setJudgeMessage(null);
+    setJudgeError(null);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setJudgeError('Enter a valid judge email address.');
+      return;
+    }
+
+    if (adminEmailsByNormalizedAddress.has(normalized)) {
+      setJudgeError('Admins already have judge access.');
+      return;
+    }
+
+    if (judgeEmailsByNormalizedAddress.has(normalized)) {
+      setJudgeError('That email already has judge access.');
+      return;
+    }
+
+    try {
+      await onAddJudge(normalized);
+      setJudgeEmail('');
+      setJudgeMessage('Judge email added.');
+    } catch (err) {
+      setJudgeError(err instanceof Error ? err.message : 'Unable to add judge email.');
+    }
+  };
+
+  const handleRemoveJudge = async (id: string) => {
+    setJudgeMessage(null);
+    setJudgeError(null);
+    try {
+      await onRemoveJudge(id);
+      setJudgeMessage('Judge email removed.');
+    } catch (err) {
+      setJudgeError(err instanceof Error ? err.message : 'Unable to remove judge email.');
     }
   };
 
@@ -180,6 +234,66 @@ export function AdminControls({
             </button>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-indigo-200 bg-indigo-50/80 p-6 shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">
+          Judge access
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+          Add users who can score projects
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Admins are judges automatically. Add any other judge by their signed-in email address.
+        </p>
+        <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-end">
+          <label className="block flex-1">
+            <span className="mb-2 block text-sm font-medium text-slate-700">Judge email</span>
+            <input
+              value={judgeEmail}
+              onChange={(event) => setJudgeEmail(event.target.value)}
+              placeholder="judge@example.com"
+              maxLength={ADMIN_EMAIL_LIMITS.email}
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+            <CharacterLimitHint value={judgeEmail} maxLength={ADMIN_EMAIL_LIMITS.email} />
+          </label>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void handleAddJudge()}
+            className="rounded-full bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Add judge
+          </button>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {adminEmails.map((entry) => (
+            <span
+              key={`admin-judge-${entry.id}`}
+              className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm text-indigo-800"
+            >
+              {entry.email} · admin
+            </span>
+          ))}
+          {judgeEmails.map((entry) => (
+            <div
+              key={entry.id}
+              className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm text-indigo-800"
+            >
+              <span>{entry.email}</span>
+              <button
+                type="button"
+                onClick={() => void handleRemoveJudge(entry.id)}
+                className="text-rose-700 transition hover:text-rose-800"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        {judgeMessage ? <p className="mt-3 text-sm text-emerald-700">{judgeMessage}</p> : null}
+        {judgeError ? <p className="mt-3 text-sm text-rose-700">{judgeError}</p> : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">

@@ -264,4 +264,29 @@ describe('RegistrationPage', () => {
     expect(screen.getByRole('button', { name: 'Update my registration' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Unregister' })).toBeDisabled();
   });
+
+  it('locks registration when an admin closes registration', async () => {
+    fetchMyProjectSubmissionMock.mockResolvedValueOnce(null);
+    useSitePageContextMock.mockReturnValue(
+      buildPageContext({
+        siteData: {
+          ...defaultSiteData,
+          settings: {
+            ...defaultSiteData.settings,
+            registrationOpen: false,
+          },
+        },
+      })
+    );
+
+    render(
+      <MemoryRouter>
+        <RegistrationPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Registration is currently closed.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save my registration' })).toBeDisabled();
+    expect(screen.getByRole('textbox', { name: /1\. Project title/i })).toBeDisabled();
+  });
 });

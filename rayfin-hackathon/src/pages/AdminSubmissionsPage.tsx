@@ -3,7 +3,21 @@ import { Link } from 'react-router-dom';
 
 import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { fetchFinalProjectSubmissions } from '@/services/finalProjectSubmissions';
+import {
+  assignJudgeToProjectAsAdmin,
+  fetchJudgeAssignments,
+  unassignJudgeFromProjectAsAdmin,
+} from '@/services/judgeAssignments';
+import { fetchAllJudgingEntries } from '@/services/judgingEntries';
 import { splitMultilineValues, type FinalProjectSubmissionRecord } from '@/types/finalProjectSubmission';
+import {
+  getJudgeAssignmentLabel,
+  type JudgeAssignmentRecord,
+} from '@/types/judgeAssignment';
+import {
+  getLatestJudgingEntriesByJudge,
+  type JudgingEntryRecord,
+} from '@/types/judging';
 import { formatDeadlineForDisplay } from '@/utils/submissionDeadline';
 
 const urlPattern = /https?:\/\/\S+/i;
@@ -57,12 +71,32 @@ export function AdminSubmissionsPage() {
   const { auth, isAdmin, siteData } = useSitePageContext();
   const [search, setSearch] = useState('');
   const [submissions, setSubmissions] = useState<FinalProjectSubmissionRecord[]>([]);
+  const [assignments, setAssignments] = useState<JudgeAssignmentRecord[]>([]);
+  const [judgingEntries, setJudgingEntries] = useState<JudgingEntryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [removingAssignmentId, setRemovingAssignmentId] = useState<string | null>(null);
+  const [assigningSubmissionId, setAssigningSubmissionId] = useState<string | null>(null);
+  const [selectedJudgeEmails, setSelectedJudgeEmails] = useState<Record<string, string>>({});
+
+  const approvedJudgeEmails = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...siteData.adminEmails, ...siteData.judgeEmails]
+            .map((entry) => entry.email.trim().toLocaleLowerCase())
+            .filter(Boolean)
+        )
+      ).sort(),
+    [siteData.adminEmails, siteData.judgeEmails]
+  );
 
   useEffect(() => {
     if (!isAdmin) {
       setSubmissions([]);
+      setAssignments([]);
+      setJudgingEntries([]);
       setLoading(false);
       setError(null);
       return;
@@ -73,10 +107,16 @@ export function AdminSubmissionsPage() {
     setLoading(true);
     setError(null);
 
-    fetchFinalProjectSubmissions()
-      .then((rows) => {
+    Promise.all([
+      fetchFinalProjectSubmissions(),
+      fetchJudgeAssignments(),
+      fetchAllJudgingEntries(),
+    ])
+      .then(([submissionRows, assignmentRows, entryRows]) => {
         if (!cancelled) {
-          setSubmissions(rows);
+          setSubmissions(submissionRows);
+          setAssignments(assignmentRows);
+          setJudgingEntries(entryRows);
         }
       })
       .catch((err) => {
@@ -95,6 +135,58 @@ export function AdminSubmissionsPage() {
     };
   }, [isAdmin]);
 
+  async function unassignJudge(
+    submission: FinalProjectSubmissionRecord,
+    assignment: JudgeAssignmentRecord
+  ) {
+    const judgeLabel = getJudgeAssignmentLabel(assignment);
+
+    if (!window.confirm(`Unassign ${judgeLabel} from ${submission.teamName}?`)) {
+      return;
+    }
+
+    setRemovingAssignmentId(assignment.id);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await unassignJudgeFromProjectAsAdmin(assignment.id);
+      setAssignments((current) => current.filter((item) => item.id !== assignment.id));
+      setMessage(`${judgeLabel} was unassigned from ${submission.teamName}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to unassign this judge.');
+    } finally {
+      setRemovingAssignmentId(null);
+    }
+  }
+
+  async function assignJudge(submission: FinalProjectSubmissionRecord) {
+    const judgeEmail = selectedJudgeEmails[submission.id] ?? '';
+
+    if (!judgeEmail) {
+      setError('Select a judge before assigning this project.');
+      return;
+    }
+
+    setAssigningSubmissionId(submission.id);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const assignment = await assignJudgeToProjectAsAdmin(submission.id, judgeEmail);
+      setAssignments((current) => [
+        ...current.filter((item) => item.id !== assignment.id),
+        assignment,
+      ]);
+      setSelectedJudgeEmails((current) => ({ ...current, [submission.id]: '' }));
+      setMessage(`${judgeEmail} was assigned to ${submission.teamName}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to assign this judge.');
+    } finally {
+      setAssigningSubmissionId(null);
+    }
+  }
+
   const filteredSubmissions = useMemo(() => {
     const normalized = search.trim().toLowerCase();
 
@@ -104,6 +196,22 @@ export function AdminSubmissionsPage() {
 
     return submissions.filter((submission) => matchesSearch(submission, normalized));
   }, [search, submissions]);
+  const starredEntriesBySubmission = useMemo(() => {
+    const entriesBySubmission = new Map<string, JudgingEntryRecord[]>();
+
+    for (const entry of judgingEntries) {
+      const projectEntries = entriesBySubmission.get(entry.submissionId) ?? [];
+      projectEntries.push(entry);
+      entriesBySubmission.set(entry.submissionId, projectEntries);
+    }
+
+    return new Map(
+      [...entriesBySubmission].map(([submissionId, entries]) => [
+        submissionId,
+        getLatestJudgingEntriesByJudge(entries).filter((entry) => entry.starred),
+      ])
+    );
+  }, [judgingEntries]);
 
   const deadlineLabel = formatDeadlineForDisplay(siteData.settings.submitDeadline);
 
@@ -188,6 +296,15 @@ export function AdminSubmissionsPage() {
         </div>
       ) : null}
 
+      {message ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        >
+          {message}
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="glass-panel rounded-3xl px-6 py-8 text-sm text-slate-600">
           Loading team submissions...
@@ -204,6 +321,18 @@ export function AdminSubmissionsPage() {
             const assetLinks = splitMultilineValues(submission.assetLinks);
             const feedbackNotes = splitMultilineValues(submission.feedbackNotes);
             const teamMembers = splitTeamMembers(submission.teamMembers);
+            const projectAssignments = assignments
+              .filter((assignment) => assignment.submissionId === submission.id)
+              .sort((left, right) => left.slot - right.slot);
+            const assignedJudgeEmails = new Set(
+              projectAssignments
+                .map((assignment) => assignment.judgeEmail?.trim().toLocaleLowerCase())
+                .filter(Boolean)
+            );
+            const availableJudgeEmails = approvedJudgeEmails.filter(
+              (email) => !assignedJudgeEmails.has(email)
+            );
+            const starredEntries = starredEntriesBySubmission.get(submission.id) ?? [];
 
             return (
               <article
@@ -212,6 +341,18 @@ export function AdminSubmissionsPage() {
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">{submission.teamName}</h2>
+                  {starredEntries.length > 0 ? (
+                    <span
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800"
+                      title={starredEntries
+                        .map((entry) => entry.judgeName || entry.judgeEmail || 'Unknown judge')
+                        .join(', ')}
+                    >
+                      <span aria-hidden="true">★</span>{' '}
+                      Starred by {starredEntries.length} judge
+                      {starredEntries.length === 1 ? '' : 's'}
+                    </span>
+                  ) : null}
                   {submission.ownerUserId === auth.user?.id ? (
                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                       Your team
@@ -224,6 +365,94 @@ export function AdminSubmissionsPage() {
                 </p>
 
                 <div className="mt-5 space-y-5">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Assigned judges
+                    </h3>
+                    {projectAssignments.length > 0 ? (
+                      <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                        {projectAssignments.map((assignment) => {
+                          const judgeLabel = getJudgeAssignmentLabel(assignment);
+
+                          return (
+                            <li
+                              key={assignment.id}
+                              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                            >
+                              <span>
+                                <span className="font-medium text-slate-900">{judgeLabel}</span>
+                                {assignment.judgeName && assignment.judgeEmail ? (
+                                  <span className="ml-2 text-slate-500">
+                                    ({assignment.judgeEmail})
+                                  </span>
+                                ) : null}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void unassignJudge(submission, assignment)}
+                                disabled={removingAssignmentId !== null}
+                                className="rounded-full border border-rose-300 px-3 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                aria-label={`Unassign ${judgeLabel} from ${submission.teamName}`}
+                              >
+                                {removingAssignmentId === assignment.id
+                                  ? 'Unassigning...'
+                                  : 'Unassign'}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-500">No judges assigned.</p>
+                    )}
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <label className="flex-1">
+                        <span className="sr-only">Assign a judge to {submission.teamName}</span>
+                        <select
+                          aria-label={`Assign a judge to ${submission.teamName}`}
+                          value={selectedJudgeEmails[submission.id] ?? ''}
+                          onChange={(event) =>
+                            setSelectedJudgeEmails((current) => ({
+                              ...current,
+                              [submission.id]: event.target.value,
+                            }))
+                          }
+                          disabled={
+                            projectAssignments.length >= 2 ||
+                            availableJudgeEmails.length === 0 ||
+                            assigningSubmissionId !== null
+                          }
+                          className="w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <option value="">
+                            {projectAssignments.length >= 2
+                              ? 'Two judges already assigned'
+                              : availableJudgeEmails.length === 0
+                                ? 'No other approved judges'
+                                : 'Select an approved judge'}
+                          </option>
+                          {availableJudgeEmails.map((email) => (
+                            <option key={email} value={email}>
+                              {email}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => void assignJudge(submission)}
+                        disabled={
+                          !selectedJudgeEmails[submission.id] ||
+                          projectAssignments.length >= 2 ||
+                          assigningSubmissionId !== null
+                        }
+                        className="rounded-full bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {assigningSubmissionId === submission.id ? 'Assigning...' : 'Assign judge'}
+                      </button>
+                    </div>
+                  </div>
+
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
                       Team members
