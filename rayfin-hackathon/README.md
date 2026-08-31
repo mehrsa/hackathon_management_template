@@ -1,48 +1,107 @@
-# Fabric Apps Hackathon
+# {{PROJECT_NAME}}
 
-Bare-bones Fabric-authenticated React + Vite app.
-Sign-in, routing, and a placeholder home page — with no data layer to delete before you start your own project.
-This app now requires sign-in for every page, while only email addresses on the admin allowlist can edit website content.
+A reusable Rayfin + React hackathon portal with registration, project submissions, judging assignments, scorecards, results, reports, and an admin-managed content system.
 
-## Getting started
+## Prerequisites
+
+- Node.js 20 or later
+- Docker Desktop for local Rayfin services
+- A Microsoft Fabric workspace and account for deployment
+
+## First-time setup
+
+Install dependencies, then run the guided setup. Use the email address that should receive initial admin access.
 
 ```bash
-# Deploy app to Fabric and start the local dev server
+npm install
+npm run setup
+```
+
+The setup command updates the project identifier and initial administrator. Do this **before** the first database apply or deployment. The administrator can add more admins and judges later from the Admin Portal.
+
+For automation, pass values without prompts:
+
+```bash
+npm run setup -- --project-name=my-hackathon --admin-email=owner@example.com
+```
+
+### Set the first admin email
+
+Run setup **before the first local database apply or Fabric deployment**:
+
+```bash
+npm run setup -- --admin-email=owner@example.com
+```
+
+Replace `owner@example.com` with the exact email address the administrator uses to sign in to Microsoft Fabric. The command writes the address to `src/types/site.ts` as `DEFAULT_ADMIN_EMAIL`. That account becomes the protected initial entry in the admin allowlist and can open the Admin Portal after signing in.
+
+To verify the configured address, open `src/types/site.ts` and confirm:
+
+```ts
+export const DEFAULT_ADMIN_EMAIL = 'owner@example.com';
+```
+
+After deployment, sign in with that account and use **Admin → Admin allowlist** to add other administrators. If the wrong address was configured, rerun setup with the correct address before deployment.
+
+## Run locally
+
+Make sure Docker Desktop is running, then start the app:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to view the app.
+The command starts Rayfin's local services, applies the data schema, emits Vite environment variables, and opens the Vite server at [http://localhost:5173](http://localhost:5173).
 
-## Project structure
+Local authentication uses the configured initial admin email and a development-only password managed by the mock auth service.
 
-```text
-├── rayfin/
-│   └── rayfin.yml          # Fabric service configuration (auth + static hosting)
-├── src/
-│   ├── main.tsx            # Entry point + Rayfin client bootstrap
-│   ├── App.tsx             # Routes and auth gate
-│   ├── hooks/
-│   │   └── AuthContext.tsx # React context wrapping the auth helpers
-│   ├── components/
-│   │   └── AuthPage.tsx    # Sign-in UI
-│   ├── pages/
-│   │   └── HomePage.tsx    # Post-auth landing page
-│   └── services/
-│       ├── IAuthService.ts        # Auth service contract + AuthUser type
-│       ├── MockAuthService.ts     # Local-dev impl (email/password)
-│       ├── RayfinAuthService.ts   # Production impl (Fabric brokered auth)
-│       ├── rayfinClient.ts        # Typed Rayfin client singleton
-│       └── bootstrap.ts           # Reads env, picks the right auth service
-└── package.json
+## Customize the portal
+
+1. Sign in locally with the automatic development account.
+2. Open **Admin** in the site navigation.
+3. Update the site title, announcement, links, timeline, deadlines, feature toggles, admins, and judges.
+4. Replace sample URLs before publishing.
+
+Default content lives in `src/content/defaultContent.ts` when code-level defaults are preferred. The banner image is in `src/assets/`.
+
+## Deploy to Microsoft Fabric
+
+```bash
+npx rayfin login
+npm run deploy
+npx rayfin up status
 ```
 
-## Scripts
+`rayfin up` provisions a Fabric item, applies the schema, builds the frontend, and configures its generated hosting URL. Runtime and deployment files under `rayfin/.env*` and `rayfin/.deployments.json` are intentionally ignored by Git.
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Deploy app to Fabric and start local dev server |
-| `npm run build` | Production build |
-| `npm run build:fabric` | Build for Fabric deployment (entrypoint for `rayfin up staticapp deploy`) |
-| `npm run lint` | Lint with ESLint |
-| `npm run test` | Run unit tests with Vitest |
-| `npm run rayfin:up` | Deploy app to Fabric (no local dev server) |
+## Quality checks
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+## Important files
+
+| Path | Purpose |
+| --- | --- |
+| `rayfin/rayfin.yml` | Rayfin services, authentication, data, and hosting configuration |
+| `rayfin/data/` | Data entities, permissions, and schema registration |
+| `src/content/defaultContent.ts` | Initial editable portal content |
+| `src/types/site.ts` | Initial admin and site content types |
+| `src/pages/` | Participant, judge, results, and admin experiences |
+| `scripts/setup-template.mjs` | One-time project and admin configuration |
+
+## Create from the template repository
+
+Once this template is published to Git, consumers can scaffold a clean project directly from a tagged release:
+
+```bash
+npx rayfin init my-hackathon -t https://github.com/YOUR_ORG/YOUR_REPO.git#v1.0.0
+cd my-hackathon
+npm run setup -- --admin-email=owner@example.com
+npm run dev
+```
+
+Replace the example repository URL with the published template URL. Tags are recommended so generated projects are reproducible.

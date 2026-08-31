@@ -297,7 +297,7 @@ describe('HomePage', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByAltText('Rayfin Hackathon banner').parentElement).toHaveClass(
+    expect(screen.getByAltText('Your Rayfin Hackathon banner').parentElement).toHaveClass(
       'aspect-[256/101]'
     );
     await waitFor(() => {

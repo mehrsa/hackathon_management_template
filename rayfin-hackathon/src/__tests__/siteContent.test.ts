@@ -10,7 +10,7 @@ import {
 
 describe('site content defaults', () => {
   it('keeps the default admin and matches email checks case-insensitively', () => {
-    expect(isAdminEmail('MGOLESTANEH@MICROSOFT.COM', defaultAdminEmails)).toBe(true);
+    expect(isAdminEmail('ADMIN@EXAMPLE.COM', defaultAdminEmails)).toBe(true);
     expect(isAdminEmail('someone@example.com', defaultAdminEmails)).toBe(false);
   });
 
@@ -46,7 +46,7 @@ describe('site content defaults', () => {
         {
           id: '99999999-9999-4999-8999-111111111111',
           email: 'judge@example.com',
-          addedByEmail: 'mgolestaneh@microsoft.com',
+          addedByEmail: 'admin@example.com',
         },
       ]
     );
@@ -60,7 +60,7 @@ describe('site content defaults', () => {
     expect(getBlocksForPage(merged.blocks, 'build')[1].title).toBe('Updated build card');
     expect(getBlocksForPage(merged.blocks, 'build').at(-1)?.title).toBe('New build card');
     expect(isAdminEmail('judge@example.com', merged.adminEmails)).toBe(true);
-    expect(isAdminEmail('mgolestaneh@microsoft.com', merged.adminEmails)).toBe(true);
+    expect(isAdminEmail('admin@example.com', merged.adminEmails)).toBe(true);
   });
 
   it('keeps default text when persisted settings contain null optional fields', () => {

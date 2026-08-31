@@ -129,7 +129,7 @@ export function HomePage() {
             <div className="aspect-[256/101]">
               <img
                 src={siteData.settings.bannerImageUrl}
-                alt="Rayfin Hackathon banner"
+                alt={`${siteData.settings.siteTitle} banner`}
                 className="h-full w-full object-cover object-center"
               />
             </div>

@@ -1,4 +1,5 @@
-export const DEFAULT_ADMIN_EMAIL = 'mgolestaneh@microsoft.com';
+// Replaced by `npm run setup` when a new project is created from this template.
+export const DEFAULT_ADMIN_EMAIL = 'admin@example.com';
 
 export type PageKey = 'home' | 'build' | 'judging' | 'submit' | 'resources';
 export type BlockKind =

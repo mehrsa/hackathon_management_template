@@ -4,19 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "template": {
-    "name": "blankapp",
-    "displayName": "Fabric Apps Hackathon",
-    "description": "Bare-bones Fabric-authenticated React + Vite app — sign-in, routing, and a placeholder home page, with no data layer to remove"
+    "name": "hackathon-portal",
+    "displayName": "Rayfin Hackathon Portal",
+    "description": "Customizable hackathon portal with registration, submissions, judging, results, administration, and Fabric authentication"
   },
   "scripts": {
-    "predev": "rayfin env --framework vite",
+    "setup": "node scripts/setup-template.mjs",
     "prebuild": "rayfin env --framework vite",
-    "dev": "rayfin up --exclude-services staticHosting && vite",
+    "dev": "rayfin dev && rayfin dev db apply && rayfin env --framework vite && vite",
     "build": "tsc -b && vite build",
     "build:fabric": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "deploy": "rayfin up",
     "rayfin:up": "rayfin up"
   },
   "dependencies": {

@@ -10,9 +10,7 @@ services:
       enabled: true
     allowedRedirectUris:
       - http://localhost:5173
-      - https://full-wren-95e36a109a-westcentralus.webapp.msit.fabricapps.net
-      - https://sonic-whirl-34ad82b3ee-westcentralus.webapp.msit.fabricapps.net
-      - https://proof-reach-2d306df8a1-westcentralus.webapp.msit.fabricapps.net
+      - https://magic-fawn-23cebd17c1-westcentralus.webapp.msit.fabricapps.net
   data:
     enabled: true
     dialect: mssql

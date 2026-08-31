@@ -47,15 +47,15 @@ const ids = {
 
 export const defaultSiteSettings: SiteSettingsRecord = {
   id: ids.settings,
-  siteTitle: 'Rayfin Hackathon - July 2026',
+  siteTitle: 'Your Rayfin Hackathon',
   siteDescription:
     'Design, build, and launch Rayfin-powered experiences with guidance for teams, judges, and submitters in one place.',
   navBuildLabel: 'What you can build',
   navJudgingLabel: 'Judging Criteria & Rewards',
   navSubmitLabel: 'Submit your project',
   navProjectsLabel: 'Proposed projects',
-  heroBadge: 'July 2026 Hackathon Announcement',
-  bannerTitle: 'Build standout apps with Rayfin this July',
+  heroBadge: 'Hackathon Announcement',
+  bannerTitle: 'Build standout apps with Rayfin',
   bannerDescription:
     'Bring your best product idea, prototype quickly with Rayfin, and showcase a polished solution to judges and peers during the Rayfin Hackathon.',
   bannerImageUrl: newBannerImage,
@@ -298,7 +298,7 @@ export const defaultBlocks: ContentBlockRecord[] = [
 export const defaultTimeline: TimelineMilestoneRecord[] = [
   {
     id: ids.timeline1,
-    dateLabel: 'July 8, 2026',
+    dateLabel: 'Week 1',
     milestone: 'Kickoff announcement',
     description:
       'Theme, rules, judging expectations, and registration details are published on the main page.',
@@ -306,7 +306,7 @@ export const defaultTimeline: TimelineMilestoneRecord[] = [
   },
   {
     id: ids.timeline2,
-    dateLabel: 'July 12, 2026',
+    dateLabel: 'Week 1',
     milestone: 'Team formation checkpoint',
     description:
       'Participants finalize teams, confirm project direction, and align on the Rayfin capabilities they plan to use.',
@@ -314,7 +314,7 @@ export const defaultTimeline: TimelineMilestoneRecord[] = [
   },
   {
     id: ids.timeline3,
-    dateLabel: 'July 23, 2026',
+    dateLabel: 'Week 2',
     milestone: 'Build deadline',
     description:
       'Feature development wraps up and teams prepare the final walkthrough, screenshots, and submission materials.',
@@ -322,7 +322,7 @@ export const defaultTimeline: TimelineMilestoneRecord[] = [
   },
   {
     id: ids.timeline4,
-    dateLabel: 'July 26, 2026',
+    dateLabel: 'Week 3',
     milestone: 'Judging and winners',
     description:
       'Judges review entries, score submissions, and announce top projects and honorable mentions.',

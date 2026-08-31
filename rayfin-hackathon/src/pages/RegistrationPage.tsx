@@ -52,15 +52,14 @@ const registrationFields: RegistrationFieldConfig[] = [
     name: 'teamMembers',
     label: '2. Full names of team members',
     description:
-      'Enter comma-separated full names of all Microsoft FTEs in your team. If registering individually, include your own name.',
+      'Enter comma-separated full names of everyone on your team. If registering individually, include your own name.',
     multiline: true,
     maxLength: PROJECT_SUBMISSION_LIMITS.teamMembers,
   },
   {
     name: 'teamEmails',
     label: '3. Email addresses of team members',
-    description:
-      'Enter the Microsoft email addresses for all team members, separated by commas.',
+    description: 'Enter the email addresses for all team members, separated by commas.',
     multiline: true,
     maxLength: PROJECT_SUBMISSION_LIMITS.teamEmails,
   },
@@ -281,11 +280,11 @@ export function RegistrationPage() {
               Registration Portal
             </p>
             <h2 className="text-2xl font-semibold text-slate-950">
-              Fabric Apps (Rayfin) Hackathon Registration Portal
+              Hackathon Registration Portal
             </h2>
             <p className="max-w-3xl text-base leading-8 text-slate-700">
-              Register yourself or your team for the Fabric Apps Hackathon. If working in a team, we
-              strongly recommend not exceeding three teammates.
+              Register yourself or your team for this hackathon. If working in a team, check the
+              event rules for the recommended team size.
             </p>
             <p className="text-sm font-medium text-slate-700">
               Signed in as <span className="font-semibold">{auth.user?.email}</span>.

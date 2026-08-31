@@ -1,5 +1,5 @@
 {
-  "templateId": "blankapp",
+  "templateId": "hackathon-portal",
   "icon": "blank-app",
   "services": {
     "auth": true,
@@ -7,7 +7,7 @@
     "storage": false,
     "staticHosting": true
   },
-  "hasDabSchema": false,
+  "hasDabSchema": true,
   "tokens": [
     "__RAYFIN_API_URL__",
     "__RAYFIN_PK__",

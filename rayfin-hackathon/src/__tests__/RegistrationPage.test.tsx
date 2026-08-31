@@ -21,7 +21,7 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 
 vi.mock('@/content/registration', () => ({
   isRegistrationOpen: () => true,
-  registrationOpenLabel: 'Registration Opens on July 1st 2026',
+  registrationOpenLabel: 'Registration is open',
 }));
 
 vi.mock('@/services/projectSubmissions', () => ({

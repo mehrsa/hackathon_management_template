@@ -1,0 +1,11 @@
+apiVersion: v1
+metadata:
+  name: rayfin-hackathon-portal
+  displayName: Rayfin Hackathon Portal
+  description: A full hackathon portal with registration, submissions, judging, results, and administration
+  version: 1.0.0
+  tags: [react, vite, hackathon, auth, data]
+entries:
+  - name: hackathon-portal
+    path: .
+    description: A customizable end-to-end portal for running a hackathon on Rayfin
