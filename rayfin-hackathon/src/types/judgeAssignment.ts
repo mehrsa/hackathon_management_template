@@ -12,6 +12,14 @@ export interface JudgeAssignmentRecord {
   createdAt: string;
 }
 
+export function getJudgeAssignmentLabel(assignment: JudgeAssignmentRecord): string {
+  return (
+    assignment.judgeName?.trim() ||
+    assignment.judgeEmail?.trim() ||
+    `Judge ${assignment.slot}`
+  );
+}
+
 export function createJudgeAssignment(
   submissionId: string,
   slot: number,

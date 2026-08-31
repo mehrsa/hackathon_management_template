@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   assignJudgeToProject,
+  assignJudgeToProjectAsAdmin,
+  isAssignmentForJudge,
   unassignJudgeFromProject,
+  unassignJudgeFromProjectAsAdmin,
 } from '@/services/judgeAssignments';
 
 const assignmentSelectMock = vi.fn();
@@ -87,5 +90,52 @@ describe('judgeAssignments service', () => {
     ).rejects.toThrow('You can only unassign yourself from a project.');
 
     expect(assignmentDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it('lets an admin delete another judge assignment', async () => {
+    await unassignJudgeFromProjectAsAdmin('11111111-1111-4111-8111-111111111111');
+
+    expect(assignmentDeleteMock).toHaveBeenCalledWith({
+      id: '11111111-1111-4111-8111-111111111111',
+    });
+  });
+
+  it('creates an email-backed assignment for an admin-selected judge', async () => {
+    assignmentSelectMock
+      .mockReturnValueOnce({
+        execute: vi.fn().mockResolvedValue([]),
+      })
+      .mockReturnValueOnce({
+        execute: vi.fn().mockImplementation(async () => [assignmentCreateMock.mock.calls[0][0]]),
+      });
+    assignmentCreateMock.mockResolvedValueOnce(undefined);
+
+    const assignment = await assignJudgeToProjectAsAdmin(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      ' Replacement@Example.com '
+    );
+
+    expect(assignment.judgeUserId).toBe('email:replacement@example.com');
+    expect(assignment.judgeEmail).toBe('replacement@example.com');
+    expect(assignmentCreateMock).toHaveBeenCalledWith(assignment);
+  });
+
+  it('matches an admin-created assignment when that judge signs in', () => {
+    expect(
+      isAssignmentForJudge(
+        {
+          id: '11111111-1111-4111-8111-111111111111',
+          submissionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          slot: 1,
+          judgeUserId: 'email:judge@example.com',
+          judgeEmail: 'judge@example.com',
+          createdAt: '2026-08-20T10:00:00.000Z',
+        },
+        {
+          id: 'entra-user-id',
+          email: 'Judge@Example.com',
+        }
+      )
+    ).toBe(true);
   });
 });

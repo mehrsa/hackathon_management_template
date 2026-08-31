@@ -37,6 +37,10 @@ export class SiteSettings {
   @text({ max: 120, optional: true }) judgingCriteriaEyebrow?: string;
   @text({ max: 160, optional: true }) judgingCriteriaTitle?: string;
   @boolean({ optional: true }) judgingFormPublished?: boolean;
+  @boolean({ optional: true }) registrationOpen?: boolean;
+  @boolean({ optional: true }) submissionOpen?: boolean;
+  @boolean({ optional: true }) resultsPublished?: boolean;
+  @text({ max: 4000, optional: true }) honorableMentionSubmissionIds?: string;
   @text({ max: 200, optional: true }) submitHeroTitle?: string;
   @text({ max: 120, optional: true }) submitChecklistEyebrow?: string;
   @text({ max: 160, optional: true }) submitChecklistTitle?: string;

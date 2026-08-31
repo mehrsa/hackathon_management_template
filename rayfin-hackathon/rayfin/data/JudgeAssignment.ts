@@ -8,9 +8,7 @@ import {
 
 @entity()
 @authenticated('read')
-@authenticated(['create', 'delete'], {
-  policy: (claims, item) => claims.sub.eq(item.judgeUserId),
-})
+@authenticated(['create', 'delete'])
 export class JudgeAssignment {
   @uuid() id!: string;
   @uuid() submissionId!: string;

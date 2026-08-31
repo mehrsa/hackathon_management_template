@@ -43,6 +43,10 @@ export interface SiteSettingsRecord {
   judgingCriteriaEyebrow: string;
   judgingCriteriaTitle: string;
   judgingFormPublished: boolean;
+  registrationOpen: boolean;
+  submissionOpen: boolean;
+  resultsPublished: boolean;
+  honorableMentionSubmissionIds: string;
   submitHeroTitle: string;
   submitChecklistEyebrow: string;
   submitChecklistTitle: string;

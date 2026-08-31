@@ -1,7 +1,10 @@
 import type { SiteSettingsRecord } from '@/types/site';
 
 export const SITE_SETTINGS_LIMITS: Record<
-  Exclude<keyof SiteSettingsRecord, 'id' | 'judgingFormPublished'>,
+  Exclude<
+    keyof SiteSettingsRecord,
+    'id' | 'judgingFormPublished' | 'registrationOpen' | 'submissionOpen' | 'resultsPublished'
+  >,
   number
 > = {
   siteTitle: 120,
@@ -30,6 +33,7 @@ export const SITE_SETTINGS_LIMITS: Record<
   judgingHeroTitle: 200,
   judgingCriteriaEyebrow: 120,
   judgingCriteriaTitle: 160,
+  honorableMentionSubmissionIds: 4000,
   submitHeroTitle: 200,
   submitChecklistEyebrow: 120,
   submitChecklistTitle: 160,

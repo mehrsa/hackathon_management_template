@@ -93,6 +93,7 @@ export function SiteLayout() {
     () => [
       { to: '/register', label: 'Registration Portal' },
       ...getNavigationItems(siteData.settings),
+      { to: '/results', label: 'Results' },
       ...(isJudge ? [{ to: '/judge', label: 'Judge projects' }] : []),
       ...(isAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
     ],
@@ -109,6 +110,8 @@ export function SiteLayout() {
         ? 'Judge projects'
       : location.pathname === '/register'
         ? 'Registration Portal'
+      : location.pathname === '/results'
+        ? 'Results'
       : location.pathname === '/'
           ? 'Main page'
           : navigationItems.find((item) => item.to === location.pathname)?.label ?? 'Main page';

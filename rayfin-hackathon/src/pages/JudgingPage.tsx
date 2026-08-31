@@ -10,6 +10,7 @@ import { fetchFinalProjectSubmissions } from '@/services/finalProjectSubmissions
 import {
   assignJudgeToProject,
   fetchJudgeAssignments,
+  isAssignmentForJudge,
   unassignJudgeFromProject,
 } from '@/services/judgeAssignments';
 import {
@@ -20,6 +21,7 @@ import {
 } from '@/services/judgingEntries';
 import type { FinalProjectSubmissionRecord } from '@/types/finalProjectSubmission';
 import {
+  getJudgeAssignmentLabel,
   MAX_JUDGES_PER_PROJECT,
   type JudgeAssignmentRecord,
 } from '@/types/judgeAssignment';
@@ -214,7 +216,7 @@ export function JudgingPage() {
       if (persistedEntryIds.has(entry.id)) {
         await deleteJudgingEntry(entry.id);
       }
-      await unassignJudgeFromProject(assignment, auth.user.id);
+      await unassignJudgeFromProject(assignment, auth.user.id, auth.user.email);
 
       setAssignments((current) => current.filter((item) => item.id !== assignment.id));
       setEntries((current) => {
@@ -442,7 +444,7 @@ export function JudgingPage() {
                   (assignment) => assignment.submissionId === submission.id
                 );
                 const myAssignment = projectAssignments.find(
-                  (assignment) => assignment.judgeUserId === auth.user?.id
+                  (assignment) => auth.user && isAssignmentForJudge(assignment, auth.user)
                 );
                 const isAssigned = Boolean(myAssignment);
                 const assignmentIsFull =
@@ -522,6 +524,17 @@ export function JudgingPage() {
                           <p className="text-sm font-semibold text-indigo-950">
                             {projectAssignments.length} / {MAX_JUDGES_PER_PROJECT} judges assigned
                           </p>
+                          {showAdminControls && projectAssignments.length > 0 ? (
+                            <ul className="mt-2 space-y-1 text-sm text-indigo-900">
+                              {projectAssignments
+                                .sort((left, right) => left.slot - right.slot)
+                                .map((assignment) => (
+                                  <li key={assignment.id}>
+                                    {getJudgeAssignmentLabel(assignment)}
+                                  </li>
+                                ))}
+                            </ul>
+                          ) : null}
                           {!myAssignment ? (
                             <button
                               type="button"

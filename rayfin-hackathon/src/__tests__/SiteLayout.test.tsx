@@ -191,6 +191,7 @@ describe('SiteLayout', () => {
       'Resources',
       defaultSiteData.settings.navProjectsLabel,
       defaultSiteData.settings.navSubmitLabel,
+      'Results',
       'Judge projects',
       'Admin',
     ]);

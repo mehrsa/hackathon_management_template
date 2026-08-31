@@ -104,7 +104,13 @@ export function SubmitPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const deadlineLabel = formatDeadlineForDisplay(siteData.settings.submitDeadline);
-  const submissionClosed = isSubmissionClosed(siteData.settings.submitDeadline);
+  const submissionClosed =
+    !siteData.settings.submissionOpen ||
+    isSubmissionClosed(siteData.settings.submitDeadline);
+  const submissionClosedMessage =
+    siteData.settings.submissionOpen && deadlineLabel
+      ? `Submissions closed on ${deadlineLabel}.`
+      : 'Submissions are currently closed.';
   const canAccessSubmissionForm = hasRegistration || hasPersistedSubmission;
   const checklistSection = checklistBlock ? (
     <section className="rounded-[2rem] border border-blue-200/80 bg-gradient-to-br from-blue-50 via-white to-indigo-100 p-7 text-slate-950 shadow-xl shadow-blue-950/10 ring-1 ring-blue-100">
@@ -271,11 +277,7 @@ export function SubmitPage() {
     }
 
     if (submissionClosed) {
-      setSubmissionError(
-        deadlineLabel
-          ? `Submissions closed on ${deadlineLabel}.`
-          : 'Submissions are currently closed.'
-      );
+      setSubmissionError(submissionClosedMessage);
       return;
     }
 
@@ -393,7 +395,7 @@ export function SubmitPage() {
               </p>
             </div>
 
-            {deadlineLabel ? (
+            {deadlineLabel || !siteData.settings.submissionOpen ? (
               <div
                 className={[
                   'mt-5 rounded-2xl px-4 py-3 text-sm',
@@ -403,7 +405,7 @@ export function SubmitPage() {
                 ].join(' ')}
               >
                 {submissionClosed
-                  ? `Submissions closed on ${deadlineLabel}.`
+                  ? submissionClosedMessage
                   : SUBMISSION_DEADLINE_NOTICE}
               </div>
             ) : null}
@@ -457,6 +459,7 @@ export function SubmitPage() {
                             value={value}
                             onChange={handleChange}
                             required={true}
+                            disabled={submissionClosed}
                             maxLength={field.maxLength}
                             rows={field.rows ?? 4}
                             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
@@ -470,6 +473,7 @@ export function SubmitPage() {
                             value={value}
                             onChange={handleChange}
                             required={true}
+                            disabled={submissionClosed}
                             maxLength={field.maxLength}
                             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                           />

@@ -50,6 +50,13 @@ const legacySiteSettingsFields = [
 
 const siteSettingsFields = [...legacySiteSettingsFields, 'submitDeadline'] as const;
 const currentSiteSettingsFields = [...siteSettingsFields, 'judgingFormPublished'] as const;
+const latestSiteSettingsFields = [
+  ...currentSiteSettingsFields,
+  'registrationOpen',
+  'submissionOpen',
+  'resultsPublished',
+  'honorableMentionSubmissionIds',
+] as const;
 
 const contentBlockFields = [
   'id',
@@ -87,6 +94,7 @@ export interface SiteContentSnapshot {
 
 let submitDeadlineSupported: boolean | null = null;
 let judgingFormPublishedSupported: boolean | null = null;
+let resultControlsSupported: boolean | null = null;
 
 function isMissingJudgeEmailEntityError(error: unknown): error is Error {
   return (
@@ -154,6 +162,20 @@ function isMissingJudgingFormPublishedError(error: unknown): error is Error {
   );
 }
 
+function isMissingResultControlsError(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    error.message.includes('SiteSettings') &&
+    error.message.includes('does not exist') &&
+    [
+      'registrationOpen',
+      'submissionOpen',
+      'resultsPublished',
+      'honorableMentionSubmissionIds',
+    ].some((field) => error.message.includes(field))
+  );
+}
+
 function createSubmitDeadlineSchemaError(): Error {
   return new Error(
     'The current Rayfin SiteSettings schema does not include submitDeadline yet. Run `rayfin up` to apply the latest schema, then try again.'
@@ -166,6 +188,12 @@ function createJudgingFormSchemaError(): Error {
   );
 }
 
+function createResultControlsSchemaError(): Error {
+  return new Error(
+    'The current Rayfin SiteSettings schema does not include event controls and results yet. Run `rayfin up` to apply the latest schema, then try again.'
+  );
+}
+
 function omitSubmitDeadline<T extends { submitDeadline: string }>(
   settings: T
 ): Omit<T, 'submitDeadline'> {
@@ -173,11 +201,39 @@ function omitSubmitDeadline<T extends { submitDeadline: string }>(
   return legacySettings;
 }
 
-function omitJudgingFormPublished(
-  settings: SiteSettingsRecord
-): Omit<SiteSettingsRecord, 'judgingFormPublished'> {
+function omitJudgingFormPublished<T extends { judgingFormPublished: boolean }>(
+  settings: T
+): Omit<T, 'judgingFormPublished'> {
   const { judgingFormPublished: _judgingFormPublished, ...legacySettings } = settings;
   return legacySettings;
+}
+
+function omitResultControls(
+  settings: SiteSettingsRecord
+): Omit<
+  SiteSettingsRecord,
+  | 'registrationOpen'
+  | 'submissionOpen'
+  | 'resultsPublished'
+  | 'honorableMentionSubmissionIds'
+> {
+  const {
+    registrationOpen: _registrationOpen,
+    submissionOpen: _submissionOpen,
+    resultsPublished: _resultsPublished,
+    honorableMentionSubmissionIds: _honorableMentionSubmissionIds,
+    ...legacySettings
+  } = settings;
+  return legacySettings;
+}
+
+function hasNonDefaultResultControls(settings: SiteSettingsRecord): boolean {
+  return (
+    !settings.registrationOpen ||
+    !settings.submissionOpen ||
+    settings.resultsPublished ||
+    Boolean(settings.honorableMentionSubmissionIds)
+  );
 }
 
 function normalizeText(value: string | null | undefined): string {
@@ -227,7 +283,9 @@ async function withTimeout<T>(
 
 async function fetchSiteSettings(client: ReturnType<typeof getRayfinClient>) {
   const fields =
-    submitDeadlineSupported === false
+    resultControlsSupported !== false
+      ? latestSiteSettingsFields
+      : submitDeadlineSupported === false
       ? legacySiteSettingsFields
       : judgingFormPublishedSupported === false
         ? siteSettingsFields
@@ -237,9 +295,18 @@ async function fetchSiteSettings(client: ReturnType<typeof getRayfinClient>) {
     const rows = await client.data.SiteSettings.select(fields).execute();
     submitDeadlineSupported = fields !== legacySiteSettingsFields ? true : submitDeadlineSupported;
     judgingFormPublishedSupported =
-      fields === currentSiteSettingsFields ? true : judgingFormPublishedSupported;
+      fields === currentSiteSettingsFields || fields === latestSiteSettingsFields
+        ? true
+        : judgingFormPublishedSupported;
+    resultControlsSupported =
+      fields === latestSiteSettingsFields ? true : resultControlsSupported;
     return rows;
   } catch (error) {
+    if (resultControlsSupported !== false && isMissingResultControlsError(error)) {
+      resultControlsSupported = false;
+      return fetchSiteSettings(client);
+    }
+
     if (judgingFormPublishedSupported !== false && isMissingJudgingFormPublishedError(error)) {
       judgingFormPublishedSupported = false;
       return fetchSiteSettings(client);
@@ -260,14 +327,20 @@ async function persistSiteSettings(
 ) {
   const client = getRayfinClient();
 
+  if (resultControlsSupported === false && hasNonDefaultResultControls(settings)) {
+    throw createResultControlsSchemaError();
+  }
+
   if (judgingFormPublishedSupported === false && settings.judgingFormPublished) {
     throw createJudgingFormSchemaError();
   }
 
+  const persistingResultControls = resultControlsSupported !== false;
+  const persistingJudgingForm = judgingFormPublishedSupported !== false;
+  const controlsPayload =
+    persistingResultControls ? settings : omitResultControls(settings);
   const payload =
-    judgingFormPublishedSupported === false
-      ? omitJudgingFormPublished(settings)
-      : settings;
+    persistingJudgingForm ? controlsPayload : omitJudgingFormPublished(controlsPayload);
 
   if (submitDeadlineSupported === false) {
     if (settings.submitDeadline) {
@@ -291,8 +364,14 @@ async function persistSiteSettings(
     }
 
     submitDeadlineSupported = true;
-    judgingFormPublishedSupported = true;
+    if (persistingJudgingForm) judgingFormPublishedSupported = true;
+    if (persistingResultControls) resultControlsSupported = true;
   } catch (error) {
+    if (resultControlsSupported !== false && isMissingResultControlsError(error)) {
+      resultControlsSupported = false;
+      return persistSiteSettings(operation, settings);
+    }
+
     if (judgingFormPublishedSupported !== false && isMissingJudgingFormPublishedError(error)) {
       judgingFormPublishedSupported = false;
       return persistSiteSettings(operation, settings);
@@ -309,11 +388,11 @@ async function persistSiteSettings(
     }
 
     if (operation === 'create') {
-      await client.data.SiteSettings.create(omitSubmitDeadline(settings));
+      await client.data.SiteSettings.create(omitSubmitDeadline(payload));
       return;
     }
 
-    await client.data.SiteSettings.update({ id: settings.id }, omitSubmitDeadline(settings));
+    await client.data.SiteSettings.update({ id: settings.id }, omitSubmitDeadline(payload));
   }
 }
 

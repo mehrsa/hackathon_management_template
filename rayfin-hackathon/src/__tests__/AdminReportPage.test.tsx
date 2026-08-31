@@ -7,10 +7,12 @@ import { defaultSiteData } from '@/content/defaultContent';
 import { AdminReportPage } from '@/pages/AdminReportPage';
 
 const useSitePageContextMock = vi.fn();
+const fetchProjectSubmissionsMock = vi.fn();
 const fetchFinalProjectSubmissionsMock = vi.fn();
 const fetchJudgeAssignmentsMock = vi.fn();
 const fetchAllJudgingEntriesMock = vi.fn();
 const updateJudgingEntryMock = vi.fn();
+const downloadSubmittedParticipantWorkbookMock = vi.fn();
 
 vi.mock('@/hooks/useSitePageContext', () => ({
   useSitePageContext: () => useSitePageContextMock(),
@@ -19,6 +21,19 @@ vi.mock('@/hooks/useSitePageContext', () => ({
 vi.mock('@/services/finalProjectSubmissions', () => ({
   fetchFinalProjectSubmissions: (...args: unknown[]) => fetchFinalProjectSubmissionsMock(...args),
 }));
+
+vi.mock('@/services/projectSubmissions', () => ({
+  fetchProjectSubmissions: (...args: unknown[]) => fetchProjectSubmissionsMock(...args),
+}));
+
+vi.mock('@/services/participantCsv', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@/services/participantCsv')>();
+  return {
+    ...original,
+    downloadSubmittedParticipantWorkbook: (...args: unknown[]) =>
+      downloadSubmittedParticipantWorkbookMock(...args),
+  };
+});
 
 vi.mock('@/services/judgeAssignments', () => ({
   fetchJudgeAssignments: (...args: unknown[]) => fetchJudgeAssignmentsMock(...args),
@@ -44,6 +59,34 @@ describe('AdminReportPage', () => {
       isAdmin: true,
       siteData: defaultSiteData,
     });
+    fetchProjectSubmissionsMock.mockResolvedValue([
+      {
+        id: 'registration-1',
+        ownerUserId: 'owner-1',
+        ownerEmail: 'nova@example.com',
+        submitterName: 'nova@example.com',
+        projectTitle: 'Project Nova',
+        teamMembers: 'Nova Owner, Nova Builder',
+        teamEmails: 'nova@example.com, builder@example.com',
+        appTheme: '',
+        teamRoles: '',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: 'registration-2',
+        ownerUserId: 'owner-2',
+        ownerEmail: 'atlas@example.com',
+        submitterName: 'atlas@example.com',
+        projectTitle: 'Project Atlas',
+        teamMembers: 'Atlas Owner',
+        teamEmails: 'atlas@example.com',
+        appTheme: '',
+        teamRoles: '',
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
     fetchFinalProjectSubmissionsMock.mockResolvedValue([
       {
         id: 'project-1',
@@ -139,6 +182,29 @@ describe('AdminReportPage', () => {
     expect(screen.getAllByText('Judge One').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Judge Two').length).toBeGreaterThan(0);
 
+    await user.click(screen.getByRole('button', { name: 'Download participant workbook' }));
+
+    expect(downloadSubmittedParticipantWorkbookMock).toHaveBeenCalledWith([
+      {
+        firstName: 'Nova',
+        lastName: 'Owner',
+        email: 'nova@example.com',
+        recognition: 'Gold',
+      },
+      {
+        firstName: 'Nova',
+        lastName: 'Builder',
+        email: 'builder@example.com',
+        recognition: 'Gold',
+      },
+      {
+        firstName: 'Atlas',
+        lastName: 'Owner',
+        email: 'atlas@example.com',
+        recognition: 'No',
+      },
+    ]);
+
     await user.click(screen.getByText('View scorecard details (2)'));
 
     expect(screen.getByText('Excellent customer impact.')).toBeVisible();
@@ -163,7 +229,7 @@ describe('AdminReportPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Need judges (1)' }));
 
-    expect(screen.getByText('Team Atlas')).toBeVisible();
+    expect(screen.getAllByText('Team Atlas').length).toBeGreaterThan(0);
     expect(screen.queryByText('Nova Owner · nova@example.com')).not.toBeInTheDocument();
   });
 
@@ -183,6 +249,7 @@ describe('AdminReportPage', () => {
     );
 
     expect(screen.getByText('Home page')).toBeVisible();
+    expect(fetchProjectSubmissionsMock).not.toHaveBeenCalled();
     expect(fetchFinalProjectSubmissionsMock).not.toHaveBeenCalled();
     expect(fetchJudgeAssignmentsMock).not.toHaveBeenCalled();
     expect(fetchAllJudgingEntriesMock).not.toHaveBeenCalled();

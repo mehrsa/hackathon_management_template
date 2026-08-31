@@ -13,6 +13,7 @@ import { JudgingPage } from '@/pages/JudgingPage';
 import { JudgingCriteriaPage } from '@/pages/JudgingCriteriaPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { RegistrationPage } from '@/pages/RegistrationPage';
+import { ResultsPage } from '@/pages/ResultsPage';
 import { ResourcesPage } from '@/pages/ResourcesPage';
 import { SubmitPage } from '@/pages/SubmitPage';
 
@@ -33,6 +34,7 @@ function App() {
             <Route path="judging" element={<JudgingCriteriaPage />} />
             <Route path="judge" element={<JudgingPage />} />
             <Route path="register" element={<RegistrationPage />} />
+            <Route path="results" element={<ResultsPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="submit" element={<SubmitPage />} />
             <Route path="projects" element={<ProjectsPage />} />

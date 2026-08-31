@@ -30,6 +30,21 @@ function normalizeAssignment(
   };
 }
 
+function normalizeEmail(value?: string | null): string {
+  return value?.trim().toLocaleLowerCase() ?? '';
+}
+
+export function isAssignmentForJudge(
+  assignment: JudgeAssignmentRecord,
+  judge: { id: string; email?: string | null }
+): boolean {
+  return (
+    assignment.judgeUserId === judge.id ||
+    (Boolean(judge.email) &&
+      normalizeEmail(assignment.judgeEmail) === normalizeEmail(judge.email))
+  );
+}
+
 export async function fetchJudgeAssignments(): Promise<JudgeAssignmentRecord[]> {
   const client = getRayfinClient();
   const rows = await client.data.JudgeAssignment.select(judgeAssignmentFields).execute();
@@ -40,12 +55,36 @@ export async function assignJudgeToProject(
   submissionId: string,
   judge: AuthUser
 ): Promise<JudgeAssignmentRecord> {
+  return createAssignmentWithCapacity(submissionId, judge);
+}
+
+export async function assignJudgeToProjectAsAdmin(
+  submissionId: string,
+  judgeEmail: string
+): Promise<JudgeAssignmentRecord> {
+  const normalizedEmail = normalizeEmail(judgeEmail);
+
+  if (!normalizedEmail) {
+    throw new Error('Select a judge before assigning this project.');
+  }
+
+  return createAssignmentWithCapacity(submissionId, {
+    id: `email:${normalizedEmail}`,
+    email: normalizedEmail,
+    name: '',
+  });
+}
+
+async function createAssignmentWithCapacity(
+  submissionId: string,
+  judge: AuthUser
+): Promise<JudgeAssignmentRecord> {
   const client = getRayfinClient();
   const currentAssignments = (await fetchJudgeAssignments()).filter(
     (assignment) => assignment.submissionId === submissionId
   );
   const existingAssignment = currentAssignments.find(
-    (assignment) => assignment.judgeUserId === judge.id
+    (assignment) => isAssignmentForJudge(assignment, judge)
   );
 
   if (existingAssignment) {
@@ -87,12 +126,18 @@ export async function assignJudgeToProject(
 
 export async function unassignJudgeFromProject(
   assignment: JudgeAssignmentRecord,
-  judgeUserId: string
+  judgeUserId: string,
+  judgeEmail?: string
 ): Promise<void> {
-  if (assignment.judgeUserId !== judgeUserId) {
+  if (!isAssignmentForJudge(assignment, { id: judgeUserId, email: judgeEmail })) {
     throw new Error('You can only unassign yourself from a project.');
   }
 
   const client = getRayfinClient();
   await client.data.JudgeAssignment.delete({ id: assignment.id });
+}
+
+export async function unassignJudgeFromProjectAsAdmin(assignmentId: string): Promise<void> {
+  const client = getRayfinClient();
+  await client.data.JudgeAssignment.delete({ id: assignmentId });
 }

@@ -6,11 +6,21 @@ import { useSitePageContext } from '@/hooks/useSitePageContext';
 import { fetchFinalProjectSubmissions } from '@/services/finalProjectSubmissions';
 import { fetchJudgeAssignments } from '@/services/judgeAssignments';
 import {
+  parseHonorableMentionIds,
+  serializeHonorableMentionIds,
+} from '@/services/hackathonResults';
+import {
   fetchAllJudgingEntries,
   updateJudgingEntry,
 } from '@/services/judgingEntries';
+import {
+  buildSubmittedParticipantCsvRows,
+  downloadSubmittedParticipantWorkbook,
+} from '@/services/participantCsv';
+import { fetchProjectSubmissions } from '@/services/projectSubmissions';
 import type { FinalProjectSubmissionRecord } from '@/types/finalProjectSubmission';
 import {
+  getJudgeAssignmentLabel,
   MAX_JUDGES_PER_PROJECT,
   type JudgeAssignmentRecord,
 } from '@/types/judgeAssignment';
@@ -21,6 +31,7 @@ import {
   MIN_CRITERION_SCORE,
   type JudgingEntryRecord,
 } from '@/types/judging';
+import type { ProjectSubmissionRecord } from '@/types/projectSubmission';
 
 type ReportFilter = 'all' | 'needs-judges' | 'in-progress' | 'complete';
 type ProjectStatus = Exclude<ReportFilter, 'all'>;
@@ -129,7 +140,7 @@ function getJudgeLabel(
     scorecard?.judgeName ||
     assignment.judgeEmail ||
     scorecard?.judgeEmail ||
-    `Judge ${assignment.slot}`
+    getJudgeAssignmentLabel(assignment)
   );
 }
 
@@ -138,7 +149,8 @@ function getScorecardJudgeLabel(entry: JudgingEntryRecord): string {
 }
 
 export function AdminReportPage() {
-  const { isAdmin, siteData } = useSitePageContext();
+  const { isAdmin, siteData, saveSettings, saving } = useSitePageContext();
+  const [registrations, setRegistrations] = useState<ProjectSubmissionRecord[]>([]);
   const [submissions, setSubmissions] = useState<FinalProjectSubmissionRecord[]>([]);
   const [assignments, setAssignments] = useState<JudgeAssignmentRecord[]>([]);
   const [entries, setEntries] = useState<JudgingEntryRecord[]>([]);
@@ -171,12 +183,14 @@ export function AdminReportPage() {
     setError(null);
 
     Promise.all([
+      fetchProjectSubmissions(),
       fetchFinalProjectSubmissions(),
       fetchJudgeAssignments(),
       fetchAllJudgingEntries(),
     ])
-      .then(([submissionRows, assignmentRows, entryRows]) => {
+      .then(([registrationRows, submissionRows, assignmentRows, entryRows]) => {
         if (cancelled) return;
+        setRegistrations(registrationRows);
         setSubmissions(submissionRows);
         setAssignments(assignmentRows);
         setEntries(entryRows);
@@ -209,15 +223,26 @@ export function AdminReportPage() {
   const expectedScorecards = reportRows.length * MAX_JUDGES_PER_PROJECT;
   const completionPercent =
     expectedScorecards > 0 ? Math.round((completedScorecards / expectedScorecards) * 100) : 0;
-  const topProjects = [...reportRows]
+  const rankedProjects = [...reportRows]
     .filter((row) => row.averageScore !== null)
     .sort(
       (left, right) =>
         (right.averageScore ?? 0) - (left.averageScore ?? 0) ||
         right.completedJudgeCount - left.completedJudgeCount ||
         left.submission.teamName.localeCompare(right.submission.teamName)
-    )
-    .slice(0, 5);
+    );
+  const topProjects = rankedProjects.slice(0, 5);
+  const winningScores = new Set(
+    [...new Set(rankedProjects.map((row) => row.averageScore))].slice(0, 3)
+  );
+  const winnerIds = new Set(
+    rankedProjects
+      .filter((row) => winningScores.has(row.averageScore))
+      .map((row) => row.submission.id)
+  );
+  const honorableMentionIds = parseHonorableMentionIds(
+    siteData.settings.honorableMentionSubmissionIds
+  );
   const criterionTrends = criteria.map((criterion) => {
     const scores = reportRows.flatMap((row) =>
       row.completedEntries
@@ -288,6 +313,38 @@ export function AdminReportPage() {
     }
   }
 
+  async function toggleHonorableMention(submissionId: string) {
+    const selected = honorableMentionIds.includes(submissionId);
+    const nextIds = selected
+      ? honorableMentionIds.filter((id) => id !== submissionId)
+      : honorableMentionIds.concat(submissionId);
+
+    setError(null);
+    setMessage(null);
+
+    try {
+      await saveSettings({
+        ...siteData.settings,
+        honorableMentionSubmissionIds: serializeHonorableMentionIds(nextIds),
+      });
+      setMessage(selected ? 'Honorable mention removed.' : 'Honorable mention added.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update honorable mentions.');
+    }
+  }
+
+  function downloadParticipantWorkbook() {
+    const rows = buildSubmittedParticipantCsvRows(
+      registrations,
+      submissions,
+      entries,
+      criterionIds,
+      siteData.settings.honorableMentionSubmissionIds
+    );
+
+    downloadSubmittedParticipantWorkbook(rows);
+  }
+
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -308,12 +365,22 @@ export function AdminReportPage() {
               across every submitted project.
             </p>
           </div>
-          <Link
-            to="/admin"
-            className="shrink-0 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-          >
-            Back to admin portal
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={downloadParticipantWorkbook}
+              disabled={loading || submissions.length === 0}
+              className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Download participant workbook
+            </button>
+            <Link
+              to="/admin"
+              className="shrink-0 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              Back to admin portal
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -433,6 +500,67 @@ export function AdminReportPage() {
                 ))}
               </div>
             </article>
+          </section>
+
+          <section className="rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">
+                  Special recognition
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                  Choose honorable mentions
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  Select standout projects outside the Gold, Silver, and Bronze score groups.
+                  Winner teams are excluded automatically from the public honorable mention list.
+                </p>
+              </div>
+              <Link
+                to="/results"
+                className="shrink-0 rounded-full border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100"
+              >
+                Preview results page
+              </Link>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {reportRows
+                .filter((row) => !winnerIds.has(row.submission.id))
+                .sort((left, right) =>
+                  left.submission.teamName.localeCompare(right.submission.teamName)
+                )
+                .map((row) => {
+                  const selected = honorableMentionIds.includes(row.submission.id);
+                  return (
+                    <div
+                      key={row.submission.id}
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-violet-200 bg-white p-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-950">
+                          {row.submission.teamName}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {row.completedJudgeCount > 0 ? 'Judged' : 'Awaiting completed scores'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={saving}
+                        onClick={() => void toggleHonorableMention(row.submission.id)}
+                        className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                          selected
+                            ? 'bg-violet-700 text-white hover:bg-violet-800'
+                            : 'border border-violet-300 text-violet-800 hover:bg-violet-100'
+                        }`}
+                      >
+                        {selected ? 'Selected' : 'Add mention'}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -30,6 +30,12 @@ vi.mock('@/services/judgingEntries', () => ({
 vi.mock('@/services/judgeAssignments', () => ({
   fetchJudgeAssignments: (...args: unknown[]) => fetchJudgeAssignmentsMock(...args),
   assignJudgeToProject: (...args: unknown[]) => assignJudgeToProjectMock(...args),
+  isAssignmentForJudge: (
+    assignment: { judgeUserId: string; judgeEmail?: string },
+    judge: { id: string; email?: string }
+  ) =>
+    assignment.judgeUserId === judge.id ||
+    assignment.judgeEmail?.toLocaleLowerCase() === judge.email?.toLocaleLowerCase(),
   unassignJudgeFromProject: (...args: unknown[]) => unassignJudgeFromProjectMock(...args),
 }));
 
@@ -374,7 +380,8 @@ describe('JudgingPage', () => {
     );
     expect(unassignJudgeFromProjectMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: '11111111-1111-4111-8111-111111111111' }),
-      'judge-1'
+      'judge-1',
+      'judge@example.com'
     );
     expect(screen.getByRole('button', { name: 'Assign to me' })).toBeVisible();
     expect(screen.queryAllByRole('combobox')).toHaveLength(0);

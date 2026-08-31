@@ -287,4 +287,27 @@ describe('SubmitPage', () => {
     expect(await screen.findByText(/Submissions closed on/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update my submission' })).toBeDisabled();
   });
+
+  it('locks final submissions when an admin closes submissions', async () => {
+    useSitePageContextMock.mockReturnValue({
+      ...buildPageContext(),
+      siteData: {
+        ...defaultSiteData,
+        settings: {
+          ...defaultSiteData.settings,
+          submissionOpen: false,
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <SubmitPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Submissions are currently closed.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit project' })).toBeDisabled();
+    expect(screen.getByRole('textbox', { name: /1\. Team name/i })).toBeDisabled();
+  });
 });

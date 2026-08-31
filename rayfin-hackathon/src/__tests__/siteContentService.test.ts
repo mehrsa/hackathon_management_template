@@ -12,6 +12,9 @@ vi.mock('@/services/rayfinClient', () => ({
 const missingSubmitDeadlineError = new Error(
   'GraphQL errors: The field `submitDeadline` does not exist on the type `SiteSettings`.'
 );
+const missingRegistrationOpenError = new Error(
+  'GraphQL errors: The field `registrationOpen` does not exist on the type `SiteSettings`.'
+);
 
 function createMockClient() {
   const siteSettingsSelect = vi.fn();
@@ -101,6 +104,44 @@ describe('site content service', () => {
     expect(siteSettingsSelect).toHaveBeenCalledTimes(2);
     expect(siteSettingsSelect.mock.calls[0]?.[0]).toContain('submitDeadline');
     expect(siteSettingsSelect.mock.calls[1]?.[0]).not.toContain('submitDeadline');
+  });
+
+  it('falls back when event controls have not been applied to the backend yet', async () => {
+    const { client, siteSettingsSelect } = createMockClient();
+    getRayfinClientMock.mockReturnValue(client);
+
+    siteSettingsSelect
+      .mockReturnValueOnce({
+        execute: vi.fn().mockRejectedValue(missingRegistrationOpenError),
+      })
+      .mockReturnValueOnce({
+        execute: vi.fn().mockResolvedValue([{ id: defaultSiteSettings.id }]),
+      });
+
+    const { fetchSiteContent } = await import('@/services/siteContent');
+    const snapshot = await fetchSiteContent(true);
+
+    expect(snapshot.settings?.registrationOpen).toBe(true);
+    expect(snapshot.settings?.submissionOpen).toBe(true);
+    expect(snapshot.settings?.resultsPublished).toBe(false);
+    expect(siteSettingsSelect.mock.calls[1]?.[0]).not.toContain('registrationOpen');
+  });
+
+  it('requires the latest schema before closing registration', async () => {
+    const { client, siteSettingsUpdate } = createMockClient();
+    getRayfinClientMock.mockReturnValue(client);
+    siteSettingsUpdate.mockRejectedValueOnce(missingRegistrationOpenError);
+
+    const { updateSiteSettings } = await import('@/services/siteContent');
+
+    await expect(
+      updateSiteSettings({
+        ...defaultSiteSettings,
+        registrationOpen: false,
+      })
+    ).rejects.toThrow(
+      'The current Rayfin SiteSettings schema does not include event controls and results yet.'
+    );
   });
 
   it('retries SiteSettings updates without submitDeadline when the backend schema is older', async () => {
